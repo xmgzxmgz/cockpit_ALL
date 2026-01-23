@@ -1,0 +1,769 @@
+/* 基础样式 */
+.monitoring-dashboard {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 玻璃面板效果 */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* 通用面板样式 */
+.resource-overview-panel {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.4));
+  backdrop-filter: blur(20px);
+  border-radius: 26px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.08),
+    0 12px 36px rgba(59, 130, 246, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  padding: 15px 15px;
+  width: 420px;
+  transition: all 0.3s ease;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  position: relative;
+  z-index: 1;
+}
+
+.header-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: 7px;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+}
+
+.panel-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+/* 机房布局标题专用样式 */
+.panel-title-detail {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.header-decoration {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), transparent);
+  margin-left: 16px;
+  border-radius: 1px;
+}
+
+/* Logo面板样式 */
+.logo-panel {
+  width: 120px;
+  height: 80px;
+}
+
+/* 时间面板样式 */
+.time-panel {
+  width: auto;
+  min-width: 300px; /* 从300px调整到500px */
+  padding: 20px; /* 增加内边距 */
+}
+
+.time-content {
+  position: relative;
+  z-index: 1;
+}
+
+.current-time {
+  font-size: 23px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: left;
+}
+
+/* 垂直布局样式 */
+.vertical-layout {
+  width: 280px;
+}
+
+.overview-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+  z-index: 1;
+}
+
+.overview-card {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 18px;
+  padding: 10px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 44px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.overview-card:hover {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.overview-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+
+.overview-card.primary::before {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.overview-card.success::before {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.overview-card.warning::before {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.overview-card.info::before {
+  background: linear-gradient(90deg, #6366f1, #4f46e5);
+}
+
+.overview-card.sold::before {
+  background: linear-gradient(90deg, #f97316, #ea580c);
+}
+
+.overview-card.billing::before {
+  background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+}
+
+.overview-card.billed::before {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.overview-card.reserved::before {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.overview-card.available::before {
+  background: linear-gradient(90deg, #06b6d4, #0891b2);
+}
+
+.overview-card.customer::before {
+  background: linear-gradient(90deg, #ec4899, #db2777);
+}
+
+.overview-card.selfuse::before {
+  background: linear-gradient(90deg, #84cc16, #65a30d);
+}
+
+.overview-card.powered::before {
+  background: linear-gradient(90deg, #eab308, #ca8a04);
+}
+
+.card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.overview-card.primary .card-icon {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.overview-card.success .card-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.overview-card.warning .card-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.overview-card.info .card-icon {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+.overview-card.sold .card-icon {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.overview-card.billing .card-icon {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.overview-card.billed .card-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.overview-card.reserved .card-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.overview-card.available .card-icon {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.overview-card.customer .card-icon {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+}
+
+.overview-card.selfuse .card-icon {
+  background: linear-gradient(135deg, #84cc16, #65a30d);
+}
+
+.overview-card.powered .card-icon {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+
+.card-content {
+  flex: 1;
+}
+
+/* 新增：标签和数值在同一行的容器 */
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+  letter-spacing: -0.3px;
+}
+
+.metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 楼层控制面板样式 */
+.floor-selection-panel {
+  width: auto;
+  /* min-width: 600px; */
+}
+
+.floor-selection-panel .compact-height {
+  padding: 12px 32px;
+}
+
+.compact-height {
+  padding: 10px 12px;
+}
+
+.floor-grid {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.floor-grid.compact {
+  gap: 8px;
+}
+
+.floor-card {
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 80px;
+  justify-content: center;
+}
+
+.floor-card.compact {
+  padding: 8px 12px;
+  min-width: 60px;
+}
+
+.floor-card-active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-color: #1d4ed8;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.floor-card-inactive {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(59, 130, 246, 0.15);
+  color: #1e293b;
+}
+
+.floor-card-inactive:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.floor-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floor-icon.compact {
+  width: 16px;
+  height: 16px;
+}
+
+.floor-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.floor-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* 房间详情面板样式 - 统一风格版本 */
+.room-detail-panel {
+  position: fixed;
+  top: 50%;
+  right: 0px;
+  transform: translateY(-50%);
+  width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* 弹出动画 */
+.panel-pop-enter-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.panel-pop-leave-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.panel-pop-enter-from {
+  opacity: 0;
+  transform: translateY(-50%) translateX(100%) scale(0.8);
+}
+
+.panel-pop-leave-to {
+  opacity: 0;
+  transform: translateY(-50%) translateX(100%) scale(0.9);
+}
+
+/* 背景遮罩层动画 */
+.backdrop-fade-enter-active,
+.backdrop-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.backdrop-fade-enter-from,
+.backdrop-fade-leave-to {
+  opacity: 0;
+  backdrop-filter: blur(0px);
+}
+
+.panel-content-wrapper {
+  padding: 28px;
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+}
+
+.panel-header-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(59, 130, 246, 0.1);
+}
+
+.close-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.05);
+}
+
+.header-icon-detail {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: 16px;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.room-info {
+  position: relative;
+  z-index: 1;
+}
+
+.room-id {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.enterprise-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.metrics-section {
+  margin-top: 24px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(59, 130, 246, 0.1);
+}
+
+.metric-item {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.metric-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.metric-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.status-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.status-normal .status-dot {
+  background: #10b981;
+}
+
+.status-alert .status-dot {
+  background: #ef4444;
+}
+
+.status-text {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-normal .status-text {
+  color: #10b981;
+}
+
+.status-alert .status-text {
+  color: #ef4444;
+}
+
+/* 通用面板蒙版样式 */
+.panel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(6, 182, 212, 0.3));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 24px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* 动画效果 */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+  animation-delay: var(--delay, 0s);
+  animation-fill-mode: both;
+}
+
+/* 背景遮罩层动画 */
+.backdrop-fade-enter-active,
+.backdrop-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.backdrop-fade-enter-from,
+.backdrop-fade-leave-to {
+  opacity: 0;
+}
+
+/* 右侧面板滑入动画 */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.slide-right-enter-from,
+.slide-right-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 左侧面板滑入动画 */
+.slide-left-enter-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.slide-left-leave-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(-100%) scale(0.9);
+}
+
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-100%) scale(0.95);
+}
+
+/* 颜色辅助类 */
+.text-red-500 {
+  color: #ef4444;
+}
+
+.text-yellow-500 {
+  color: #eab308;
+}
+
+.text-green-500 {
+  color: #10b981;
+}
+
+.bg-red-500 {
+  background-color: #ef4444;
+}
+
+.bg-yellow-500 {
+  background-color: #eab308;
+}
+
+.bg-green-500 {
+  background-color: #10b981;
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .resource-overview-panel {
+    width: 300px;
+    padding: 24px;
+  }
+
+  .room-detail-panel {
+    width: 350px;
+  }
+
+  .floor-selection-panel {
+    min-width: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .resource-overview-panel {
+    width: 280px;
+    padding: 20px;
+  }
+
+  .room-detail-panel {
+    width: 100%;
+  }
+
+  .floor-selection-panel {
+    min-width: 300px;
+  }
+}
