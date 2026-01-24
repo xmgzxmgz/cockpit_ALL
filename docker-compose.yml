@@ -5,13 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: cockpit-frontend
     ports:
-      - "5174:5174"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    environment:
-      - VITE_PORT=5174
-      - VITE_API_TARGET=http://backend:8000
+      - "5174:80"
     depends_on:
       - backend
     restart: always
@@ -22,9 +16,7 @@ services:
       dockerfile: Dockerfile
     container_name: cockpit-backend
     ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
+      - "8002:8000"
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/cockpit_db
     depends_on:
@@ -35,7 +27,7 @@ services:
     image: postgres:15-alpine
     container_name: cockpit-db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password

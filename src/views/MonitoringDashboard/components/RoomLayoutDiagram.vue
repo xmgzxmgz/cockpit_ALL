@@ -7,7 +7,7 @@
   </transition>
 
   <transition name="slide-left" appear>
-    <div class="room-layout-diagram">
+    <div class="room-layout-diagram" style="z-index: 9999995">
       <div class="panel-content-wrapper">
         <div class="panel-header-detail">
           <div class="header-icon-detail">
@@ -75,41 +75,14 @@
                 <div v-else class="text-gray-500">机房布局数据加载中...</div>
               </div>
 
-              <!-- Custom Tooltip for Rack Details - 使用Teleport突破框架限制 -->
+              <!-- Rack Dashboard Modal -->
               <Teleport to="body">
-                <div
-                  v-if="activeRackDetails.rack"
-                  :style="tooltipStyle"
-                  class="rack-tooltip"
-                >
-                  <div class="tooltip-header">
-                    <span class="tooltip-title">机柜详情</span>
-                    <button
-                      @click="activeRackDetails.rack = null"
-                      class="close-button"
-                    >
-                      X
-                    </button>
-                  </div>
-                  <div class="tooltip-content">
-                    <p>
-                      <strong>编号:</strong>
-                      {{ activeRackDetails.rack.visibleIndex }}
-                    </p>
-                    <p
-                      v-if="activeRackDetails.rack.enterpriseName"
-                      class="single-line-text"
-                    >
-                      <strong>客户:</strong>
-                      {{ activeRackDetails.rack.enterpriseName }}
-                    </p>
-                    <p v-if="activeRackDetails.rack.KHMANAGE">
-                      <strong>客户经理:</strong>
-                      {{ activeRackDetails.rack.KHMANAGE }}
-                    </p>
-                    <p><strong>维护人:</strong> 李师傅</p>
-                  </div>
-                </div>
+                <RackDashboard
+                  v-if="showRackDashboard && selectedRack"
+                  :rack="selectedRack"
+                  :room-name="roomData.name || roomData.id"
+                  @close="handleRackDashboardClose"
+                />
               </Teleport>
 
               <!-- 区域框架覆盖层 -->
@@ -150,6 +123,8 @@ import { computed, watchEffect, ref, onMounted, onUnmounted } from "vue";
 import { rackController } from "@/utils/rackController";
 import { initializeRoom } from "@/utils/roomInitializer";
 import { roomConfigs } from "@/config/roomConfig";
+import RackDashboard from "./RackDashboard.vue";
+import axios from "axios";
 
 interface Props {
   roomData: RoomData;
@@ -157,6 +132,9 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits<{ close: [] }>();
+
+const showRackDashboard = ref(false);
+const selectedRack = ref<any>(null);
 
 interface RackDetails {
   rack: any | null;
@@ -171,34 +149,24 @@ const activeRackDetails = ref<RackDetails>({
 });
 
 /**
- * 处理机柜点击事件，显示机柜详情提示框。
+ * 处理机柜点击事件，显示机柜详情看板。
  * @param rack - 被点击的机柜数据。
  * @param event - 鼠标事件对象。
  */
 const handleRackClick = (rack: any, event: MouseEvent) => {
-  // 阻止事件冒泡，避免触发全局点击事件立即关闭提示框
+  // 阻止事件冒泡
   event.stopPropagation();
 
-  // 如果点击的是同一个机柜，则关闭提示框
-  if (activeRackDetails.value.rack === rack) {
-    activeRackDetails.value.rack = null;
-  } else {
-    // 更新活动机柜详情和位置
-    activeRackDetails.value = {
-      rack: {
-        ...rack,
-        enterpriseName: rack.enterprise === "未启用" ? "空闲" : rack.enterprise,
-        cabinetType: rack.cabinetType || "N/A",
-        power: rack.power || "N/A",
-        unitCount: rack.unitCount || "N/A",
-        deviceCount: rack.deviceCount || "N/A",
-        KHMANAGE: rack.KHMANAGE || null,
-        maintainer: rack.maintainer || null,
-      },
-      x: event.clientX,
-      y: event.clientY,
-    };
-  }
+  selectedRack.value = {
+    ...rack,
+    enterpriseName: rack.enterprise === "未启用" ? null : rack.enterprise,
+  };
+  showRackDashboard.value = true;
+};
+
+const handleRackDashboardClose = () => {
+  showRackDashboard.value = false;
+  selectedRack.value = null;
 };
 
 /**
@@ -465,11 +433,10 @@ const simulateDataReception = async () => {
   console.log(`正在获取机房 ${props.roomData.id} 的数据...`);
 
   try {
-    const response = await fetch(`/api/room/${props.roomData.id}/cabinets`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
+    const response = await axios.get(
+      `/api/cockpit/rooms/${props.roomData.id}/cabinets`,
+    );
+    const data = response.data;
 
     console.log(`机房 ${props.roomData.id} 后端返回的原始数据:`, data);
     console.log(`数据条数: ${data ? data.length : 0}`);

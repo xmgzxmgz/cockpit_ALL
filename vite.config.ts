@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
       // 如果需要代理 API 请求，可以配置如下代理规则
       proxy: {
         "/api": {
-          target: env.VITE_API_TARGET || "http://localhost:8000",
+          target: env.VITE_API_TARGET || "http://localhost:8002",
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ""),
         },

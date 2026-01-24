@@ -1,22 +1,22 @@
-import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
-import axios from 'axios'
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios from "axios";
 
 // 定义后端返回数据的通用类型
 interface ApiResponse<T = any> {
-  code: number
-  data: T
-  msg: string
-  success: boolean
+  code: number;
+  data: T;
+  msg: string;
+  success: boolean;
 }
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8009',
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8009",
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-})
+});
 
 // 请求拦截器
 request.interceptors.request.use(
@@ -26,64 +26,77 @@ request.interceptors.request.use(
     // if (token) {
     //   config.headers.Authorization = `Bearer ${token}`
     // }
-    console.log('发送请求:', config)
-    return config
+    console.log("发送请求:", config);
+    return config;
   },
   (error) => {
-    console.error('请求错误:', error)
-    return Promise.reject(error)
+    console.error("请求错误:", error);
+    return Promise.reject(error);
   },
-)
+);
 
 // 响应拦截器
 request.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
-    console.log('收到响应:', response)
-    const { success, code, msg } = response.data
-    
+    console.log("收到响应:", response);
+
+    // 兼容后端直接返回数据的情况（如数组或不包含标准包装的对象）
+    // 如果是数组，或者是对象但没有 success/code 字段，且状态码是 2xx，则直接返回
+    if (
+      Array.isArray(response.data) ||
+      (response.data &&
+        typeof response.data === "object" &&
+        !("success" in response.data) &&
+        !("code" in response.data))
+    ) {
+      return response;
+    }
+
+    const { success, code, msg } = response.data;
+
     // 优先根据success判断请求是否成功
     if (success) {
       // 可以根据需要添加对特定code的处理
-      return response
+      return response;
     } else {
       // 处理业务失败的情况
-      console.error(`业务错误: [${code}] ${msg}`)
-      return Promise.reject(new Error(msg || '请求失败'))
+      console.error(`业务错误: [${code}] ${msg}`);
+      return Promise.reject(new Error(msg || "请求失败"));
     }
   },
   (error) => {
-    console.error('响应错误:', error)
-    
+    console.error("响应错误:", error);
+
     if (error.response) {
       // HTTP状态码处理
       switch (error.response.status) {
         case 401:
-          console.error('未授权，请重新登录')
+          console.error("未授权，请重新登录");
           // 可以在这里添加跳转到登录页的逻辑
           // router.push('/login')
-          break
+          break;
         case 403:
-          console.error('拒绝访问')
-          break
+          console.error("拒绝访问");
+          break;
         case 404:
-          console.error('请求地址不存在')
-          break
+          console.error("请求地址不存在");
+          break;
         case 500:
-          console.error('服务器内部错误')
-          break
+          console.error("服务器内部错误");
+          break;
         default:
-          console.error(`错误: ${error.response.status}`)
+          console.error(`错误: ${error.response.status}`);
       }
     } else if (error.request) {
       // 网络错误
-      console.error('网络错误，请检查网络连接')
+      console.error("网络错误，请检查网络连接");
     } else {
       // 其他错误
-      console.error('请求错误:', error.message)
+      console.error("请求错误:", error.message);
     }
-    
-    return Promise.reject(error)
-  },
-)
 
-export default request
+    return Promise.reject(error);
+  },
+);
+
+export default request;

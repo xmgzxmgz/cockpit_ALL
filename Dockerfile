@@ -1,21 +1,15 @@
-# 使用 Node.js 作为基础镜像
-FROM node:20
-
-# 设置工作目录
+# Build stage
+FROM node:20 as build-stage
 WORKDIR /app
-
-# 复制 package.json 和 package-lock.json
 COPY package*.json ./
-
-# 安装依赖（使用淘宝源）
 RUN npm config set registry https://registry.npmmirror.com && \
     npm install
-
-# 复制项目文件
 COPY . .
+RUN npm run build
 
-# 暴露端口
-EXPOSE 5174
-
-# 启动命令
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Production stage
+FROM nginx:stable-alpine as production-stage
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
