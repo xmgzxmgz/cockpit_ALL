@@ -30,13 +30,10 @@ from .database import (
     MaintenanceAsset,
     KnowledgeBaseLink,
 )
-from .routers import cockpit
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Cockpit Backend")
-
-app.include_router(cockpit.router)
 
 app.add_middleware(
     CORSMiddleware,

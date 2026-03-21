@@ -397,21 +397,12 @@ class KnowledgeBaseLinkUpdate(BaseModel):
     url: Optional[str] = None
 
 # New schemas for Cockpit
-
-class CockpitStats(BaseModel):
-    total_cabinets: int
-    total_power: float
-    total_capacity: float
-    active_alerts: int
-    pue: float
-
 class EnterpriseResponse(BaseModel):
     id: int
     name: str
-    contact: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    address: Optional[str] = None
+    full_name: Optional[str] = None
+    maintainer: Optional[str] = None
+    manager: Optional[str] = None
     color: Optional[str] = None
 
     class Config:
@@ -421,8 +412,17 @@ class RoomResponse(BaseModel):
     id: str
     name: str
     location: Optional[str] = None
-    manager: Optional[str] = None
-    phone: Optional[str] = None
-    
+    cols: int
+    rows: int
+    max_racks: Optional[int] = None
+    status: str
+
     class Config:
         from_attributes = True
+
+class CockpitStats(BaseModel):
+    total_cabinets: int
+    total_power: float
+    total_capacity: float
+    active_alerts: int
+    pue: float

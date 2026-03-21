@@ -25,9 +25,6 @@
           </svg>
         </div>
         <h3 class="panel-title">机房详情</h3>
-        <button class="view-layout-btn" @click="$emit('open-layout', roomData)">
-          查看机房布局
-        </button>
         <button class="close-button" @click="$emit('close')">
           <svg
             class="w-4 h-4"
@@ -372,7 +369,6 @@ interface Props {
 const props = defineProps<Props>();
 defineEmits<{
   close: [];
-  "open-layout": [roomData: RoomData];
 }>();
 
 // 计算机房的实际机柜总数
@@ -675,31 +671,6 @@ watch(
 /* 机柜信息样式 */
 .rack-section {
   margin-top: 20px;
-}
-
-.view-layout-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  margin-right: 12px;
-  margin-left: auto; /* Push to the right, next to close button */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s;
-}
-
-.view-layout-btn:hover {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-}
-
-.view-layout-btn:active {
-  transform: translateY(0);
 }
 
 .rack-stats {

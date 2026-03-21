@@ -2,20 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
-import random
-from datetime import datetime
 
 from ..database import get_db, Enterprise, Room, Cabinet, Alert
 from ..schemas import (
     EnterpriseResponse,
     RoomResponse,
     CabinetResponse,
-    CabinetDetailResponse,
     CockpitStats
 )
 
 router = APIRouter(
-    prefix="/cockpit",
+    prefix="/api/cockpit",
     tags=["cockpit"],
     responses={404: {"description": "Not found"}},
 )

@@ -7,7 +7,7 @@
   </transition>
 
   <transition name="slide-left" appear>
-    <div class="room-layout-diagram" style="z-index: 9999995">
+    <div class="room-layout-diagram">
       <div class="panel-content-wrapper">
         <div class="panel-header-detail">
           <div class="header-icon-detail">
@@ -80,7 +80,7 @@
                 <RackDashboard
                   v-if="showRackDashboard && selectedRack"
                   :rack="selectedRack"
-                  :room-name="roomData.name || roomData.id"
+                  :room-name="roomData.name"
                   @close="handleRackDashboardClose"
                 />
               </Teleport>
@@ -123,8 +123,6 @@ import { computed, watchEffect, ref, onMounted, onUnmounted } from "vue";
 import { rackController } from "@/utils/rackController";
 import { initializeRoom } from "@/utils/roomInitializer";
 import { roomConfigs } from "@/config/roomConfig";
-import RackDashboard from "./RackDashboard.vue";
-import axios from "axios";
 
 interface Props {
   roomData: RoomData;
@@ -168,6 +166,7 @@ const handleRackDashboardClose = () => {
   showRackDashboard.value = false;
   selectedRack.value = null;
 };
+
 
 /**
  * 处理全局点击事件，当点击提示框外部时关闭提示框。
@@ -433,10 +432,11 @@ const simulateDataReception = async () => {
   console.log(`正在获取机房 ${props.roomData.id} 的数据...`);
 
   try {
-    const response = await axios.get(
-      `/api/cockpit/rooms/${props.roomData.id}/cabinets`,
-    );
-    const data = response.data;
+    const response = await fetch(`/api/room/${props.roomData.id}/cabinets`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
 
     console.log(`机房 ${props.roomData.id} 后端返回的原始数据:`, data);
     console.log(`数据条数: ${data ? data.length : 0}`);

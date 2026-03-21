@@ -299,11 +299,11 @@ const retryDelay = 5000; // 5秒后重试
 // 获取企业机房总数数据
 const getPriseRoomTotal = async (retries = 0): Promise<boolean> => {
   try {
-    const response = await fetch("/api/stats/overview");
-    if (!response.ok) throw new Error("Network response was not ok");
-
+    const response = await fetch('/api/stats/overview');
+    if (!response.ok) throw new Error('Network response was not ok');
+    
     const data = await response.json();
-
+    
     enterpriseRoomData.value.totalITCabinetCount = data.totalITCabinetCount;
     enterpriseRoomData.value.totalEnterpriseCount = data.totalEnterpriseCount;
     return true;
@@ -316,7 +316,7 @@ const getPriseRoomTotal = async (retries = 0): Promise<boolean> => {
 // 获取已售出机柜总数数据
 const getSoldCabinetTotal = async (retries = 0): Promise<boolean> => {
   // 暂时保留模拟或从新API获取
-  totalSoldCabinets.value = 3200;
+  totalSoldCabinets.value = 3200; 
   return true;
 };
 

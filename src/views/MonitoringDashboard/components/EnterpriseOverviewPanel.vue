@@ -235,9 +235,7 @@
                       </div>
                       <div class="manager-info">
                         <span class="manager-label">客户经理</span>
-                        <span class="manager-name">{{
-                          enterprise.khmanage || "待分配"
-                        }}</span>
+                        <span class="manager-name">{{ enterprise.khmanage || '待分配' }}</span>
                       </div>
                     </div>
                   </div>

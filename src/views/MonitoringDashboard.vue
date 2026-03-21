@@ -18,7 +18,6 @@
       v-if="showDetailsPanel && clickedRoom"
       :room-data="clickedRoom"
       @close="handleDetailsPanelClose"
-      @open-layout="handleOpenLayout"
     />
 
     <!-- 机房布局示意图保持不变，只通过点击触发 -->
@@ -84,21 +83,13 @@ const handleRoomClick = (roomData: RoomData) => {
   if (enterpriseOverviewRef.value && !enterpriseOverviewRef.value.isCollapsed) {
     enterpriseOverviewRef.value.togglePanel();
   }
-  // 暂时不自动打开机房布局图，由详情面板中的按钮触发
-  // dashboardStore.setSelectedRoom(roomData);
+  // 同时设置选中的房间（用于布局图）
+  dashboardStore.setSelectedRoom(roomData);
 };
 
 const handleDetailsPanelClose = () => {
   showDetailsPanel.value = false;
   clickedRoom.value = null;
-};
-
-const handleOpenLayout = (roomData: RoomData) => {
-  // 打开机房布局图
-  dashboardStore.setSelectedRoom(roomData);
-  // 关闭详情面板，避免遮挡 (或者保持开启，因为z-index已经调整)
-  // 这里选择关闭详情面板，让用户专注于布局图
-  showDetailsPanel.value = false;
 };
 
 const handleRoomLayoutClose = () => {

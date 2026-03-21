@@ -6,18 +6,8 @@
         <div class="dashboard-header">
           <div class="header-left">
             <div class="icon-box">
-              <svg
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 01-2 2v4a2 2 0 012 2h14a2 2 0 012-2v-4a2 2 0 01-2-2m-2-4h.01M17 16h.01"
-                ></path>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 01-2 2v4a2 2 0 012 2h14a2 2 0 012-2v-4a2 2 0 01-2-2m-2-4h.01M17 16h.01"></path>
               </svg>
             </div>
             <div class="title-group">
@@ -26,18 +16,8 @@
             </div>
           </div>
           <button class="close-btn" @click="$emit('close')">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              ></path>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
@@ -50,31 +30,13 @@
             <div class="info-card enterprise-card">
               <h3>所属企业</h3>
               <div class="enterprise-info">
-                <div
-                  class="ent-icon"
-                  :style="{
-                    backgroundColor: rackData.enterprise_name
-                      ? '#3b82f6'
-                      : '#9ca3af',
-                  }"
-                >
-                  {{
-                    rackData.enterprise_name
-                      ? rackData.enterprise_name.substring(0, 1)
-                      : "空"
-                  }}
+                <div class="ent-icon" :style="{ backgroundColor: rackData.enterprise_name ? '#3b82f6' : '#9ca3af' }">
+                  {{ rackData.enterprise_name ? rackData.enterprise_name.substring(0, 1) : '空' }}
                 </div>
                 <div class="ent-details">
-                  <span class="ent-name">{{
-                    rackData.enterprise_name || "当前空闲"
-                  }}</span>
-                  <span
-                    class="status-badge"
-                    :class="
-                      rackData.status === 'active' ? 'active' : 'inactive'
-                    "
-                  >
-                    {{ rackData.status === "active" ? "运行中" : "未启用" }}
+                  <span class="ent-name">{{ rackData.enterprise_name || '当前空闲' }}</span>
+                  <span class="status-badge" :class="rackData.status === 'active' ? 'active' : 'inactive'">
+                    {{ rackData.status === 'active' ? '运行中' : '未启用' }}
                   </span>
                 </div>
               </div>
@@ -85,11 +47,7 @@
               <h3>空间使用率</h3>
               <div class="gauge-container">
                 <div class="gauge-circle">
-                  <span class="gauge-value"
-                    >{{
-                      Math.round((rackData.used_u / rackData.total_u) * 100)
-                    }}%</span
-                  >
+                  <span class="gauge-value">{{ Math.round((rackData.used_u / rackData.total_u) * 100) }}%</span>
                   <span class="gauge-label">已用</span>
                 </div>
                 <div class="capacity-details">
@@ -109,8 +67,8 @@
               </div>
             </div>
 
-            <!-- Environment Card -->
-            <div class="info-card env-card">
+             <!-- Environment Card -->
+             <div class="info-card env-card">
               <h3>环境监测</h3>
               <div class="metric-row">
                 <div class="metric-item">
@@ -120,10 +78,7 @@
                     <span class="unit">kW</span>
                   </div>
                   <div class="progress-bar">
-                    <div
-                      class="progress"
-                      :style="{ width: `${(rackData.power_usage / 5) * 100}%` }"
-                    ></div>
+                    <div class="progress" :style="{ width: `${(rackData.power_usage / 5) * 100}%` }"></div>
                   </div>
                 </div>
                 <div class="metric-item">
@@ -133,12 +88,7 @@
                     <span class="unit">°C</span>
                   </div>
                   <div class="progress-bar">
-                    <div
-                      class="progress temp"
-                      :style="{
-                        width: `${((rackData.temperature - 15) / 20) * 100}%`,
-                      }"
-                    ></div>
+                    <div class="progress temp" :style="{ width: `${((rackData.temperature - 15) / 20) * 100}%` }"></div>
                   </div>
                 </div>
               </div>
@@ -150,9 +100,7 @@
             <div class="info-card device-list-card">
               <div class="card-header">
                 <h3>设备列表</h3>
-                <span class="device-count"
-                  >{{ rackData.device_count }} 台设备</span
-                >
+                <span class="device-count">{{ rackData.device_count }} 台设备</span>
               </div>
               <div class="device-list-container">
                 <table class="device-table">
@@ -166,7 +114,7 @@
                   <tbody>
                     <tr v-for="i in rackData.device_count" :key="i">
                       <td>{{ rackData.total_u - i + 1 }}U</td>
-                      <td>Server-{{ String(i).padStart(2, "0") }}</td>
+                      <td>Server-{{ String(i).padStart(2, '0') }}</td>
                       <td><span class="status-dot online"></span> 正常</td>
                     </tr>
                     <tr v-if="rackData.device_count === 0">
@@ -194,15 +142,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import axios from "axios";
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
 const props = defineProps<{
   rack: any; // Passed from RoomLayoutDiagram
   roomName: string;
 }>();
 
-const emit = defineEmits(["close"]);
+const emit = defineEmits(['close']);
 
 interface CabinetDetail {
   id: number;
@@ -226,29 +174,26 @@ const fetchData = async () => {
   try {
     // Determine room_id and cabinet_label
     // rack.roomName might be "101机房", we need "101"
-    const roomId = props.roomName.replace("机房", "");
+    const roomId = props.roomName.replace('机房', '');
     const cabinetLabel = String(props.rack.visibleIndex); // Using visibleIndex as label for now
 
-    const response = await axios.get(
-      `/api/cockpit/rooms/${roomId}/cabinets/${cabinetLabel}`,
-    );
+    const response = await axios.get(`/api/cockpit/rooms/${roomId}/cabinets/${cabinetLabel}`);
     rackData.value = response.data;
   } catch (error) {
-    console.error("Failed to fetch cabinet details:", error);
+    console.error('Failed to fetch cabinet details:', error);
     // Fallback to basic data if API fails (for demo stability)
     rackData.value = {
       id: props.rack.id,
       cabinet_label: String(props.rack.visibleIndex),
-      room_id: props.roomName.replace("机房", ""),
-      enterprise_name:
-        props.rack.enterprise === "未启用" ? null : props.rack.enterprise,
-      status: props.rack.enterprise ? "active" : "inactive",
+      room_id: props.roomName.replace('机房', ''),
+      enterprise_name: props.rack.enterprise === '未启用' ? null : props.rack.enterprise,
+      status: props.rack.enterprise ? 'active' : 'inactive',
       total_u: 42,
       used_u: props.rack.enterprise ? 20 : 0,
       power_usage: props.rack.enterprise ? 1.5 : 0,
       temperature: 24.5,
       device_count: props.rack.enterprise ? 5 : 0,
-      updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
   } finally {
     loading.value = false;
@@ -266,7 +211,7 @@ onMounted(() => {
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(5px);
-  z-index: 9999999;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -564,8 +509,7 @@ onMounted(() => {
   background: #10b981;
 }
 
-.loading-state,
-.error-state {
+.loading-state, .error-state {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -585,18 +529,14 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 /* Transitions */
-.fade-enter-active,
-.fade-leave-active {
+.fade-enter-active, .fade-leave-active {
   transition: opacity 0.3s;
 }
-.fade-enter-from,
-.fade-leave-to {
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 </style>
