@@ -33,6 +33,8 @@
       @close="handleEnterpriseePanelClose"
       @room-click="handleRoomTagClick"
     />
+
+
   </div>
 </template>
 
@@ -49,6 +51,7 @@ import FloorControls from "./MonitoringDashboard/components/FloorControls.vue";
 import DetailsPanel from "./MonitoringDashboard/components/DetailsPanel.vue";
 import RoomLayoutDiagram from "./MonitoringDashboard/components/RoomLayoutDiagram.vue";
 import EnterpriseOverviewPanel from "./MonitoringDashboard/components/EnterpriseOverviewPanel.vue";
+
 // RoomData 类型已在 dashboard store 中定义
 
 // 使用 stores 和 composables

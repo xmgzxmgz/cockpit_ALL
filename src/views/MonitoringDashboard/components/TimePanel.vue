@@ -18,7 +18,7 @@
             ></path>
           </svg>
         </div>
-        <h3 class="panel-title" style="font-size: 24px">云计算资源监控平台</h3>
+        <h3 class="panel-title" style="font-size: 24px">资源监控平台</h3>
         <div class="header-decoration"></div>
       </div>
       <div class="time-content">
