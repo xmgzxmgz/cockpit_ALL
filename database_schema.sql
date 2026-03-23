@@ -244,6 +244,176 @@ CREATE TABLE IF NOT EXISTS knowledge_base_links (
     url VARCHAR(255)
 );
 
+-- 20. 数据中心配置表 (Data Center Config)
+CREATE TABLE IF NOT EXISTS data_center_config (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    floor_count INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 21. 楼层配置表 (Floor Config)
+CREATE TABLE IF NOT EXISTS floor_config (
+    id SERIAL PRIMARY KEY,
+    data_center_id INTEGER REFERENCES data_center_config(id),
+    floor_number INTEGER NOT NULL,
+    floor_name VARCHAR(100),
+    shape VARCHAR(50) DEFAULT 'rectangle',
+    width FLOAT DEFAULT 100,
+    depth FLOAT DEFAULT 100,
+    room_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 22. 机房配置表 (Room Config)
+CREATE TABLE IF NOT EXISTS room_config (
+    id SERIAL PRIMARY KEY,
+    floor_id INTEGER REFERENCES floor_config(id),
+    room_number INTEGER NOT NULL,
+    room_name VARCHAR(100),
+    shape VARCHAR(50) DEFAULT 'rectangle',
+    color VARCHAR(50) DEFAULT '#6b7280',
+    cabinet_count INTEGER DEFAULT 0,
+    position_x FLOAT DEFAULT 0,
+    position_y FLOAT DEFAULT 0,
+    position_z FLOAT DEFAULT 0,
+    rotation FLOAT DEFAULT 0,
+    width FLOAT DEFAULT 50,
+    depth FLOAT DEFAULT 50,
+    height FLOAT DEFAULT 30,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 23. 机柜排列配置表 (Cabinet Layout)
+CREATE TABLE IF NOT EXISTS cabinet_layout (
+    id SERIAL PRIMARY KEY,
+    room_id INTEGER REFERENCES room_config(id),
+    layout_type VARCHAR(50) DEFAULT 'row',
+    columns INTEGER DEFAULT 10,
+    rows INTEGER DEFAULT 10,
+    spacing FLOAT DEFAULT 1.0,
+    start_position_x FLOAT DEFAULT 0,
+    start_position_y FLOAT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 24. 机柜网格表 (Cabinet Grid)
+CREATE TABLE IF NOT EXISTS cabinet_grid (
+    id SERIAL PRIMARY KEY,
+    room_id INTEGER REFERENCES room_config(id),
+    grid_x INTEGER NOT NULL,
+    grid_y INTEGER NOT NULL,
+    is_occupied BOOLEAN DEFAULT FALSE,
+    cabinet_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 25. 资源概览表 (Resource Overview)
+CREATE TABLE IF NOT EXISTS resource_overview (
+    id SERIAL PRIMARY KEY,
+    total_servers INTEGER DEFAULT 0,
+    total_it_cabinet_count INTEGER DEFAULT 0,
+    total_enterprise_count INTEGER DEFAULT 0,
+    should_bill_cabinets INTEGER DEFAULT 0,
+    billed_cabinets INTEGER DEFAULT 0,
+    reserved_cabinets INTEGER DEFAULT 0,
+    available_cabinets INTEGER DEFAULT 0,
+    customer_cabinets INTEGER DEFAULT 0,
+    self_use_cabinets INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 插入数据中心配置初始数据
+INSERT INTO data_center_config (name, floor_count) VALUES
+('北京A数据中心', 4)
+ON CONFLICT DO NOTHING;
+
+-- 插入楼层配置初始数据
+INSERT INTO floor_config (data_center_id, floor_number, floor_name, shape, width, depth, room_count) VALUES
+(1, 1, '一楼', 'rectangle', 100, 100, 6),
+(1, 2, '二楼', 'rectangle', 100, 100, 6),
+(1, 3, '三楼', 'rectangle', 100, 100, 6),
+(1, 4, '四楼', 'rectangle', 100, 100, 6)
+ON CONFLICT DO NOTHING;
+
+-- 插入机房配置初始数据
+INSERT INTO room_config (floor_id, room_number, room_name, shape, color, cabinet_count, position_x, position_y, position_z, rotation, width, depth, height) VALUES
+(1, 1, '核心机房A区', 'rectangle', '#FF6B6B', 50, 0, 0, 0, 0, 50, 50, 30),
+(1, 2, '核心机房B区', 'rectangle', '#4ECDC4', 40, 0, 0, 0, 0, 50, 50, 30),
+(1, 3, '存储机房', 'rectangle', '#45B7D1', 60, 0, 0, 0, 0, 50, 50, 30),
+(1, 4, '网络机房', 'rectangle', '#96CEB4', 30, 0, 0, 0, 0, 50, 50, 30),
+(1, 5, 'GPU计算区', 'rectangle', '#FFEAA7', 70, 0, 0, 0, 0, 50, 50, 30),
+(1, 6, '控制机房', 'rectangle', '#DDA0DD', 20, 0, 0, 0, 0, 50, 50, 30),
+(2, 1, '核心机房A区', 'rectangle', '#98FB98', 55, 0, 0, 0, 0, 50, 50, 30),
+(2, 2, '核心机房B区', 'rectangle', '#F0E68C', 45, 0, 0, 0, 0, 50, 50, 30),
+(2, 3, '存储机房', 'rectangle', '#FF6B6B', 65, 0, 0, 0, 0, 50, 50, 30),
+(2, 4, '网络机房', 'rectangle', '#4ECDC4', 35, 0, 0, 0, 0, 50, 50, 30),
+(2, 5, 'GPU计算区', 'rectangle', '#45B7D1', 75, 0, 0, 0, 0, 50, 50, 30),
+(2, 6, '控制机房', 'rectangle', '#96CEB4', 25, 0, 0, 0, 0, 50, 50, 30),
+(3, 1, '核心机房A区', 'rectangle', '#FFEAA7', 60, 0, 0, 0, 0, 50, 50, 30),
+(3, 2, '核心机房B区', 'rectangle', '#DDA0DD', 50, 0, 0, 0, 0, 50, 50, 30),
+(3, 3, '存储机房', 'rectangle', '#98FB98', 70, 0, 0, 0, 0, 50, 50, 30),
+(3, 4, '网络机房', 'rectangle', '#F0E68C', 40, 0, 0, 0, 0, 50, 50, 30),
+(3, 5, 'GPU计算区', 'rectangle', '#FF6B6B', 80, 0, 0, 0, 0, 50, 50, 30),
+(3, 6, '控制机房', 'rectangle', '#4ECDC4', 30, 0, 0, 0, 0, 50, 50, 30),
+(4, 1, '核心机房A区', 'rectangle', '#45B7D1', 65, 0, 0, 0, 0, 50, 50, 30),
+(4, 2, '核心机房B区', 'rectangle', '#96CEB4', 55, 0, 0, 0, 0, 50, 50, 30),
+(4, 3, '存储机房', 'rectangle', '#FFEAA7', 75, 0, 0, 0, 0, 50, 50, 30),
+(4, 4, '网络机房', 'rectangle', '#DDA0DD', 45, 0, 0, 0, 0, 50, 50, 30),
+(4, 5, 'GPU计算区', 'rectangle', '#98FB98', 85, 0, 0, 0, 0, 50, 50, 30),
+(4, 6, '控制机房', 'rectangle', '#F0E68C', 35, 0, 0, 0, 0, 50, 50, 30)
+ON CONFLICT DO NOTHING;
+
+-- 插入机柜排列配置初始数据
+INSERT INTO cabinet_layout (room_id, layout_type, columns, rows, spacing, start_position_x, start_position_y) VALUES
+(1, 'row', 10, 10, 1.0, 0, 0),
+(2, 'row', 10, 10, 1.0, 0, 0),
+(3, 'row', 10, 10, 1.0, 0, 0),
+(4, 'row', 10, 10, 1.0, 0, 0),
+(5, 'row', 10, 10, 1.0, 0, 0),
+(6, 'row', 10, 10, 1.0, 0, 0),
+(7, 'row', 10, 10, 1.0, 0, 0),
+(8, 'row', 10, 10, 1.0, 0, 0),
+(9, 'row', 10, 10, 1.0, 0, 0),
+(10, 'row', 10, 10, 1.0, 0, 0),
+(11, 'row', 10, 10, 1.0, 0, 0),
+(12, 'row', 10, 10, 1.0, 0, 0),
+(13, 'row', 10, 10, 1.0, 0, 0),
+(14, 'row', 10, 10, 1.0, 0, 0),
+(15, 'row', 10, 10, 1.0, 0, 0),
+(16, 'row', 10, 10, 1.0, 0, 0),
+(17, 'row', 10, 10, 1.0, 0, 0),
+(18, 'row', 10, 10, 1.0, 0, 0),
+(19, 'row', 10, 10, 1.0, 0, 0),
+(20, 'row', 10, 10, 1.0, 0, 0),
+(21, 'row', 10, 10, 1.0, 0, 0),
+(22, 'row', 10, 10, 1.0, 0, 0),
+(23, 'row', 10, 10, 1.0, 0, 0),
+(24, 'row', 10, 10, 1.0, 0, 0)
+ON CONFLICT DO NOTHING;
+
+-- 插入机柜网格初始数据
+INSERT INTO cabinet_grid (room_id, grid_x, grid_y, is_occupied, cabinet_id) VALUES
+-- 为每个机房生成 10x10 的网格
+-- 这里只生成部分示例数据，实际运行时会通过脚本生成完整数据
+(1, 0, 0, TRUE, 1),
+(1, 0, 1, TRUE, 2),
+(1, 0, 2, FALSE, NULL),
+(1, 0, 3, TRUE, 3),
+(1, 0, 4, FALSE, NULL),
+(1, 0, 5, TRUE, 4),
+(1, 0, 6, TRUE, 5),
+(1, 0, 7, FALSE, NULL),
+(1, 0, 8, TRUE, 6),
+(1, 0, 9, FALSE, NULL)
+ON CONFLICT DO NOTHING;
+
 -- 插入功能分类数据
 INSERT INTO feature_categories (code, name, description) VALUES
 ('ENV', '基础环境监控', '温湿度、水浸、空气质量等环境监控'),
@@ -347,65 +517,65 @@ ON CONFLICT DO NOTHING;
 
 -- 6. 功能指标记录 (Feature Metrics) - 为图表提供数据
 INSERT INTO feature_metrics (feature_code, metric_key, metric_value, unit, collected_at) VALUES
-('1.01', 'temperature', '24.5', '°C', NOW() - INTERVAL '1 hour'),
-('1.01', 'temperature', '25.1', '°C', NOW() - INTERVAL '30 minutes'),
-('1.01', 'temperature', '23.8', '°C', NOW()),
-('1.01', 'humidity', '45', '%', NOW() - INTERVAL '1 hour'),
-('1.01', 'humidity', '48', '%', NOW()),
+('1.01', 'temperature', '24.5', '°C', datetime('now', '-1 hour')),
+('1.01', 'temperature', '25.1', '°C', datetime('now', '-30 minutes')),
+('1.01', 'temperature', '23.8', '°C', datetime('now')),
+('1.01', 'humidity', '45', '%', datetime('now', '-1 hour')),
+('1.01', 'humidity', '48', '%', datetime('now')),
 
-('2.01', 'pue', '1.45', '', NOW() - INTERVAL '4 hour'),
-('2.01', 'pue', '1.42', '', NOW() - INTERVAL '3 hour'),
-('2.01', 'pue', '1.39', '', NOW() - INTERVAL '2 hour'),
-('2.01', 'pue', '1.38', '', NOW() - INTERVAL '1 hour'),
-('2.01', 'pue', '1.35', '', NOW()),
+('2.01', 'pue', '1.45', '', datetime('now', '-4 hour')),
+('2.01', 'pue', '1.42', '', datetime('now', '-3 hour')),
+('2.01', 'pue', '1.39', '', datetime('now', '-2 hour')),
+('2.01', 'pue', '1.38', '', datetime('now', '-1 hour')),
+('2.01', 'pue', '1.35', '', datetime('now')),
 
-('3.01', 'cpu_temp', '55', '°C', NOW() - INTERVAL '2 hour'),
-('3.01', 'cpu_temp', '62', '°C', NOW() - INTERVAL '1 hour'),
-('3.01', 'cpu_temp', '58', '°C', NOW()),
+('3.01', 'cpu_temp', '55', '°C', datetime('now', '-2 hour')),
+('3.01', 'cpu_temp', '62', '°C', datetime('now', '-1 hour')),
+('3.01', 'cpu_temp', '58', '°C', datetime('now')),
 
-('4.01', 'traffic_in', '450', 'Mbps', NOW() - INTERVAL '1 hour'),
-('4.01', 'traffic_in', '890', 'Mbps', NOW()),
-('4.01', 'traffic_out', '320', 'Mbps', NOW() - INTERVAL '1 hour'),
-('4.01', 'traffic_out', '650', 'Mbps', NOW());
+('4.01', 'traffic_in', '450', 'Mbps', datetime('now', '-1 hour')),
+('4.01', 'traffic_in', '890', 'Mbps', datetime('now')),
+('4.01', 'traffic_out', '320', 'Mbps', datetime('now', '-1 hour')),
+('4.01', 'traffic_out', '650', 'Mbps', datetime('now'));
 
 -- 9. 环境读数 (Environment Readings)
 INSERT INTO environment_readings (room_id, sensor_type, value, unit, recorded_at) VALUES
-('201', 'temperature', 23.5, '°C', NOW()),
-('201', 'humidity', 45.0, '%', NOW()),
-('202', 'temperature', 22.8, '°C', NOW()),
-('202', 'humidity', 42.5, '%', NOW()),
-('203', 'temperature', 24.1, '°C', NOW()),
-('203', 'humidity', 48.2, '%', NOW());
+('201', 'temperature', 23.5, '°C', datetime('now')),
+('201', 'humidity', 45.0, '%', datetime('now')),
+('202', 'temperature', 22.8, '°C', datetime('now')),
+('202', 'humidity', 42.5, '%', datetime('now')),
+('203', 'temperature', 24.1, '°C', datetime('now')),
+('203', 'humidity', 48.2, '%', datetime('now'));
 
 -- 10. 电力事件 (Power Events)
 INSERT INTO power_events (room_id, event_type, severity, detail, occurred_at) VALUES
-('201', 'voltage_sag', 'warning', '监测到短暂电压暂降', NOW() - INTERVAL '2 days'),
-('203', 'ups_switch', 'info', 'UPS例行自检切换', NOW() - INTERVAL '5 days');
+('201', 'voltage_sag', 'warning', '监测到短暂电压暂降', datetime('now', '-2 days')),
+('203', 'ups_switch', 'info', 'UPS例行自检切换', datetime('now', '-5 days'));
 
 -- 11. 服务器指标 (Server Metrics)
 INSERT INTO server_metrics (server_name, metric_key, metric_value, unit, recorded_at) VALUES
-('SRV-A01-01', 'cpu_usage', '45', '%', NOW()),
-('SRV-A01-01', 'memory_usage', '62', '%', NOW()),
-('SRV-A01-01', 'disk_usage', '78', '%', NOW()),
-('SRV-B02-05', 'cpu_usage', '89', '%', NOW()), -- High load
-('SRV-B02-05', 'memory_usage', '91', '%', NOW());
+('SRV-A01-01', 'cpu_usage', '45', '%', datetime('now')),
+('SRV-A01-01', 'memory_usage', '62', '%', datetime('now')),
+('SRV-A01-01', 'disk_usage', '78', '%', datetime('now')),
+('SRV-B02-05', 'cpu_usage', '89', '%', datetime('now')), -- High load
+('SRV-B02-05', 'memory_usage', '91', '%', datetime('now'));
 
 -- 12. 网络指标 (Network Metrics)
 INSERT INTO network_metrics (link_name, metric_key, metric_value, unit, recorded_at) VALUES
-('Core-Switch-A', 'throughput', '8.5', 'Gbps', NOW()),
-('Core-Switch-A', 'latency', '2', 'ms', NOW()),
-('Edge-Router-1', 'packet_loss', '0.01', '%', NOW());
+('Core-Switch-A', 'throughput', '8.5', 'Gbps', datetime('now')),
+('Core-Switch-A', 'latency', '2', 'ms', datetime('now')),
+('Edge-Router-1', 'packet_loss', '0.01', '%', datetime('now'));
 
 -- 13. 应用指标 (Application Metrics)
 INSERT INTO application_metrics (app_name, metric_key, metric_value, unit, recorded_at) VALUES
-('Billing-Service', 'response_time', '120', 'ms', NOW()),
-('Auth-Service', 'response_time', '45', 'ms', NOW()),
-('Data-Pipeline', 'queue_depth', '5400', 'msg', NOW());
+('Billing-Service', 'response_time', '120', 'ms', datetime('now')),
+('Auth-Service', 'response_time', '45', 'ms', datetime('now')),
+('Data-Pipeline', 'queue_depth', '5400', 'msg', datetime('now'));
 
 -- 14. 安防事件 (Security Events)
 INSERT INTO security_events (event_type, severity, detail, occurred_at) VALUES
-('unauthorized_access', 'critical', '门禁系统检测到未授权卡片尝试进入204机房', NOW() - INTERVAL '1 hour'),
-('video_motion', 'info', '201机房G区检测到人员移动', NOW() - INTERVAL '15 minutes');
+('unauthorized_access', 'critical', '门禁系统检测到未授权卡片尝试进入204机房', datetime('now', '-1 hour')),
+('video_motion', 'info', '201机房G区检测到人员移动', datetime('now', '-15 minutes'));
 
 -- 15. 值班排班 (Oncall Schedules)
 INSERT INTO oncall_schedules (name, duty_user, days, start_time, end_time) VALUES
@@ -416,14 +586,14 @@ INSERT INTO oncall_schedules (name, duty_user, days, start_time, end_time) VALUE
 
 -- 16. 巡检报告 (Inspection Reports)
 INSERT INTO inspection_reports (report_date, summary, file_url) VALUES
-(NOW() - INTERVAL '1 day', '2023年10月23日例行巡检，发现202机房空调异响，已报修。', '/reports/20231023.pdf'),
-(NOW() - INTERVAL '7 days', '周度巡检报告，所有设备运行正常。', '/reports/20231016.pdf');
+(datetime('now', '-1 day'), '2023年10月23日例行巡检，发现202机房空调异响，已报修。', '/reports/20231023.pdf'),
+(datetime('now', '-7 days'), '周度巡检报告，所有设备运行正常。', '/reports/20231016.pdf');
 
 -- 17. 固件版本 (Firmware Inventory)
 INSERT INTO firmware_inventory (device_name, device_type, firmware_version, last_checked) VALUES
-('Core-Switch-01', 'Switch', 'v12.4.3', NOW()),
-('UPS-Main-A', 'UPS', 'v2.1.0', NOW()),
-('PDU-201-A01', 'PDU', 'v1.5.2', NOW());
+('Core-Switch-01', 'Switch', 'v12.4.3', datetime('now')),
+('UPS-Main-A', 'UPS', 'v2.1.0', datetime('now')),
+('PDU-201-A01', 'PDU', 'v1.5.2', datetime('now'));
 
 -- 18. 维保资产 (Maintenance Assets)
 INSERT INTO maintenance_assets (asset_name, asset_type, warranty_expiry) VALUES

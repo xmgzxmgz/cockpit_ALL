@@ -54,9 +54,9 @@
           <div class="card-content">
             <!-- 标签和数值在同一行 -->
             <div class="metric-row">
-              <span class="metric-label">已建总机柜</span>
+              <span class="metric-label">总机柜数</span>
               <span class="metric-value">{{
-                enterpriseRoomData.totalServers
+                enterpriseRoomData.totalServers || 0
               }}</span>
             </div>
           </div>
@@ -151,9 +151,9 @@
           <div class="card-content">
             <!-- 标签和数值在同一行 -->
             <div class="metric-row">
-              <span class="metric-label">总上电机柜数</span>
+              <span class="metric-label">已使用</span>
               <span class="metric-value">{{
-                enterpriseRoomData.totalITCabinetCount
+                enterpriseRoomData.totalITCabinetCount || 0
               }}</span>
             </div>
           </div>
@@ -182,9 +182,9 @@
           <div class="card-content">
             <!-- 标签和数值在同一行 -->
             <div class="metric-row">
-              <span class="metric-label">客户使用机柜</span>
+              <span class="metric-label">空闲</span>
               <span class="metric-value">{{
-                enterpriseRoomData.customerCabinets || 0
+                enterpriseRoomData.availableCabinets || 0
               }}</span>
             </div>
           </div>
@@ -213,10 +213,10 @@
           <div class="card-content">
             <!-- 标签和数值在同一行 -->
             <div class="metric-row">
-              <span class="metric-label">自用机柜</span>
+              <span class="metric-label">使用率</span>
               <span class="metric-value">{{
-                enterpriseRoomData.selfUseCabinets || 0
-              }}</span>
+                (enterpriseRoomData.totalServers > 0 ? ((enterpriseRoomData.totalITCabinetCount / enterpriseRoomData.totalServers) * 100).toFixed(1) : 0)
+              }}%</span>
             </div>
           </div>
         </div>
@@ -273,18 +273,16 @@ const handlePanelClick = () => {
 
 // 使用 ref 创建响应式对象，存储企业机房相关数据
 const enterpriseRoomData = ref({
-  totalServers: 4425, // 机柜总数，初始值
-  totalITCabinetCount: 0, // 已上电机柜数，初始值
-  totalEnterpriseCount: 0, // 企业数，初始值
-  shouldBillCabinets: 0, // 应计收机柜数，初始值
-  billedCabinets: 0, // 已计收机柜数，初始值
-  reservedCabinets: 0, // 预占机柜数，初始值
-  availableCabinets: 0, // 可销售机柜数，初始值
-  customerCabinets: 0, // 客户使用机柜数，初始值
-  selfUseCabinets: 0, // 自用机柜数，初始值
+  totalServers: 0, // 机柜总数
+  totalITCabinetCount: 0, // 已上电机柜数
+  totalEnterpriseCount: 0, // 企业数
+  shouldBillCabinets: 0, // 应计收机柜数
+  billedCabinets: 0, // 已计收机柜数
+  reservedCabinets: 0, // 预占机柜数
+  availableCabinets: 0, // 可销售机柜数
+  customerCabinets: 0, // 客户使用机柜数
+  selfUseCabinets: 0, // 自用机柜数
 });
-// 使用 ref 创建响应式变量，存储已售出机柜总数
-let totalSoldCabinets = ref<number>(0);
 
 // 存储定时器ID，用于清理
 let autoUpdateTimer: number | null = null;
@@ -292,40 +290,63 @@ let autoUpdateTimer: number | null = null;
 const lastUpdateTime = ref<Date>(new Date());
 // 存储更新状态
 const isUpdating = ref<boolean>(false);
-// 重试次数和最大重试次数
-const maxRetries = 3;
-const retryDelay = 5000; // 5秒后重试
 
-// 获取企业机房总数数据
-const getPriseRoomTotal = async (retries = 0): Promise<boolean> => {
+// 从数据库获取资源概览数据
+const fetchResourceOverview = async (): Promise<boolean> => {
   try {
-    const response = await fetch('/api/stats/overview');
+    const response = await fetch('http://127.0.0.1:8002/api/config/resource-overview');
     if (!response.ok) throw new Error('Network response was not ok');
     
     const data = await response.json();
     
-    enterpriseRoomData.value.totalITCabinetCount = data.totalITCabinetCount;
-    enterpriseRoomData.value.totalEnterpriseCount = data.totalEnterpriseCount;
+    // 更新所有字段
+    enterpriseRoomData.value.totalServers = data.total_servers || 0;
+    enterpriseRoomData.value.totalITCabinetCount = data.total_it_cabinet_count || 0;
+    enterpriseRoomData.value.totalEnterpriseCount = data.total_enterprise_count || 0;
+    enterpriseRoomData.value.shouldBillCabinets = data.should_bill_cabinets || 0;
+    enterpriseRoomData.value.billedCabinets = data.billed_cabinets || 0;
+    enterpriseRoomData.value.reservedCabinets = data.reserved_cabinets || 0;
+    enterpriseRoomData.value.availableCabinets = data.available_cabinets || 0;
+    enterpriseRoomData.value.customerCabinets = data.customer_cabinets || 0;
+    enterpriseRoomData.value.selfUseCabinets = data.self_use_cabinets || 0;
+    
+    console.log("资源概览数据已从数据库加载:", data);
     return true;
   } catch (error) {
-    console.error("获取企业机房总数失败:", error);
-    return false;
+    console.error("获取资源概览数据失败:", error);
+    // 首次使用时生成随机数据
+    await refreshResourceOverview();
+    return true;
   }
 };
 
-// 获取已售出机柜总数数据
-const getSoldCabinetTotal = async (retries = 0): Promise<boolean> => {
-  // 暂时保留模拟或从新API获取
-  totalSoldCabinets.value = 3200; 
-  return true;
-};
-
-// 获取自用机柜数和客户机柜数
-const getCabinetCounts = async (retries = 0): Promise<boolean> => {
-  // 暂时保留模拟
-  enterpriseRoomData.value.customerCabinets = 2800;
-  enterpriseRoomData.value.selfUseCabinets = 400;
-  return true;
+// 刷新资源概览数据（生成随机数据）
+const refreshResourceOverview = async (): Promise<boolean> => {
+  try {
+    const response = await fetch('http://127.0.0.1:8002/api/config/resource-overview/refresh', {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    
+    const data = await response.json();
+    
+    // 更新所有字段
+    enterpriseRoomData.value.totalServers = data.total_servers || 0;
+    enterpriseRoomData.value.totalITCabinetCount = data.total_it_cabinet_count || 0;
+    enterpriseRoomData.value.totalEnterpriseCount = data.total_enterprise_count || 0;
+    enterpriseRoomData.value.shouldBillCabinets = data.should_bill_cabinets || 0;
+    enterpriseRoomData.value.billedCabinets = data.billed_cabinets || 0;
+    enterpriseRoomData.value.reservedCabinets = data.reserved_cabinets || 0;
+    enterpriseRoomData.value.availableCabinets = data.available_cabinets || 0;
+    enterpriseRoomData.value.customerCabinets = data.customer_cabinets || 0;
+    enterpriseRoomData.value.selfUseCabinets = data.self_use_cabinets || 0;
+    
+    console.log("资源概览数据已刷新:", data);
+    return true;
+  } catch (error) {
+    console.error("刷新资源概览数据失败:", error);
+    return false;
+  }
 };
 
 // 更新所有数据
@@ -336,21 +357,13 @@ const updateAllData = async () => {
   console.log("开始更新资源概览数据...");
 
   try {
-    // 并行请求所有数据，提高效率
-    const results = await Promise.all([
-      getPriseRoomTotal(),
-      getSoldCabinetTotal(),
-      getCabinetCounts(),
-    ]);
+    const success = await fetchResourceOverview();
 
-    // 检查是否所有请求都成功
-    const allSuccess = results.every((result) => result === true);
-
-    if (allSuccess) {
+    if (success) {
       console.log("资源概览数据更新成功");
       lastUpdateTime.value = new Date();
     } else {
-      console.warn("部分资源概览数据更新失败");
+      console.warn("资源概览数据更新失败");
     }
   } catch (error) {
     console.error("更新资源概览数据时发生错误:", error);
@@ -366,13 +379,13 @@ const setupAutoUpdate = () => {
     clearInterval(autoUpdateTimer);
   }
 
-  // 设置每小时更新一次数据
-  const oneHourInMs = 60 * 60 * 1000;
+  // 设置每 5 分钟更新一次数据
+  const fiveMinutesInMs = 5 * 60 * 1000;
   autoUpdateTimer = setInterval(() => {
     updateAllData();
-  }, oneHourInMs) as unknown as number;
+  }, fiveMinutesInMs) as unknown as number;
 
-  console.log("已设置资源概览数据每小时自动更新");
+  console.log("已设置资源概览数据每 5 分钟自动更新");
 };
 
 // 组件挂载后执行的生命周期钩子

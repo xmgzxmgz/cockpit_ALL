@@ -15,9 +15,16 @@ from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/cockpit_db")
+import pathlib
 
-engine = create_engine(DATABASE_URL)
+_DEFAULT_DB = f"sqlite:///{pathlib.Path(__file__).resolve().parents[3] / 'cockpit.db'}"
+DATABASE_URL = os.getenv("DATABASE_URL", _DEFAULT_DB)
+
+# SQLite 需要额外参数避免多线程错误。PostgreSQL 则直接连接。
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -248,6 +255,118 @@ class KnowledgeBaseLink(Base):
     feature_code = Column(String, ForeignKey("monitoring_features.code"))
     title = Column(String)
     url = Column(String)
+
+
+# ==================== 新增：数据中心配置相关表 ====================
+
+class DataCenterConfig(Base):
+    """数据中心配置表"""
+    __tablename__ = "data_center_config"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    floor_count = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    floors = relationship("FloorConfig", back_populates="data_center")
+
+
+class FloorConfig(Base):
+    """楼层配置表"""
+    __tablename__ = "floor_config"
+
+    id = Column(Integer, primary_key=True, index=True)
+    data_center_id = Column(Integer, ForeignKey("data_center_config.id"))
+    floor_number = Column(Integer, nullable=False)
+    floor_name = Column(String)
+    shape = Column(String, default="rectangle")  # rectangle, trapezoid, circle
+    width = Column(Float, default=100)
+    depth = Column(Float, default=100)
+    room_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    data_center = relationship("DataCenterConfig", back_populates="floors")
+    rooms = relationship("RoomConfig", back_populates="floor")
+
+
+class RoomConfig(Base):
+    """机房配置表"""
+    __tablename__ = "room_config"
+
+    id = Column(Integer, primary_key=True, index=True)
+    floor_id = Column(Integer, ForeignKey("floor_config.id"))
+    room_number = Column(Integer, nullable=False)
+    room_name = Column(String)
+    shape = Column(String, default="rectangle")  # rectangle, trapezoid, circle
+    color = Column(String, default="#6b7280")  # 机房颜色
+    cabinet_count = Column(Integer, default=0)
+    position_x = Column(Float, default=0)
+    position_y = Column(Float, default=0)
+    position_z = Column(Float, default=0)
+    rotation = Column(Float, default=0)
+    width = Column(Float, default=50)
+    depth = Column(Float, default=50)
+    height = Column(Float, default=30)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    floor = relationship("FloorConfig", back_populates="rooms")
+    layout = relationship("CabinetLayout", back_populates="room", uselist=False)
+    grids = relationship("CabinetGrid", back_populates="room")
+
+
+class CabinetLayout(Base):
+    """机柜排列配置表"""
+    __tablename__ = "cabinet_layout"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("room_config.id"))
+    layout_type = Column(String, default="row")  # row, circle, custom
+    columns = Column(Integer, default=10)
+    rows = Column(Integer, default=10)
+    spacing = Column(Float, default=1.0)
+    start_position_x = Column(Float, default=0)
+    start_position_y = Column(Float, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    room = relationship("RoomConfig", back_populates="layout")
+
+
+class CabinetGrid(Base):
+    """机柜网格表（用于鼠标框选）"""
+    __tablename__ = "cabinet_grid"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("room_config.id"))
+    grid_x = Column(Integer, nullable=False)
+    grid_y = Column(Integer, nullable=False)
+    is_occupied = Column(Boolean, default=False)
+    cabinet_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    room = relationship("RoomConfig", back_populates="grids")
+
+
+class ResourceOverview(Base):
+    """资源概览表"""
+    __tablename__ = "resource_overview"
+
+    id = Column(Integer, primary_key=True, index=True)
+    total_servers = Column(Integer, default=0)
+    total_it_cabinet_count = Column(Integer, default=0)
+    total_enterprise_count = Column(Integer, default=0)
+    should_bill_cabinets = Column(Integer, default=0)
+    billed_cabinets = Column(Integer, default=0)
+    reserved_cabinets = Column(Integer, default=0)
+    available_cabinets = Column(Integer, default=0)
+    customer_cabinets = Column(Integer, default=0)
+    self_use_cabinets = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 def get_db():

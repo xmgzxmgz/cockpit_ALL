@@ -1482,3 +1482,8 @@ def send_multi_channel_alert(payload: AlertNotificationRequest, db: Session = De
     db.commit()
     db.refresh(alert)
     return alert
+
+
+# ==================== 注册配置路由 ====================
+from .routers import config
+app.include_router(config.router)

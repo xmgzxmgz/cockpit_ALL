@@ -34,6 +34,9 @@
       @room-click="handleRoomTagClick"
     />
 
+    <!-- 设置面板 -->
+    <SettingsPanel />
+
 
   </div>
 </template>
@@ -48,6 +51,7 @@ import LogoPanel from "./MonitoringDashboard/components/LogoPanel.vue";
 import TimePanel from "./MonitoringDashboard/components/TimePanel.vue";
 import ResourceOverview from "./MonitoringDashboard/components/ResourceOverview.vue";
 import FloorControls from "./MonitoringDashboard/components/FloorControls.vue";
+import SettingsPanel from "./MonitoringDashboard/components/SettingsPanel.vue";
 import DetailsPanel from "./MonitoringDashboard/components/DetailsPanel.vue";
 import RoomLayoutDiagram from "./MonitoringDashboard/components/RoomLayoutDiagram.vue";
 import EnterpriseOverviewPanel from "./MonitoringDashboard/components/EnterpriseOverviewPanel.vue";

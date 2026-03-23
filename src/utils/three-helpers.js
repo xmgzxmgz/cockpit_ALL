@@ -77,6 +77,11 @@ export async function initThreeScene(container, callbacks = {}) {
   try {
     // 合并事件回调
     eventCallbacks = { ...eventCallbacks, ...callbacks }
+    // 如果传入了 floorCount，则更新楼层数
+    if (callbacks.floorCount) {
+      buildingConfig.floors = callbacks.floorCount
+    }
+
     // 保存容器元素引用
     containerElement = container
 
@@ -84,8 +89,10 @@ export async function initThreeScene(container, callbacks = {}) {
     initScene(container)
     // 初始化光照
     initLighting()
+    // 从数据库加载配置数据
+    await loadConfigFromDatabase()
     // 生成模拟数据
-    generateMockData()
+    await generateMockData()
     // 创建建筑物
     await createBuilding()
     // 设置交互
@@ -106,6 +113,34 @@ export async function initThreeScene(container, callbacks = {}) {
     console.error('初始化失败:', error)
     // 重新抛出错误
     throw error
+  }
+}
+
+// 从数据库加载配置数据
+async function loadConfigFromDatabase() {
+  try {
+    // 加载数据中心配置
+    const dcResponse = await fetch('http://127.0.0.1:8002/api/config/data-center/1');
+    if (dcResponse.ok) {
+      const dcData = await dcResponse.json();
+      if (dcData.floor_count) {
+        buildingConfig.floors = dcData.floor_count;
+      }
+    }
+
+    // 加载楼层配置
+    const floorsResponse = await fetch('http://127.0.0.1:8002/api/config/data-center/1/floors');
+    if (floorsResponse.ok) {
+      const floorsData = await floorsResponse.json();
+      // 可以根据需要使用楼层数据
+      console.log('加载的楼层配置:', floorsData);
+    }
+
+    console.log('从数据库加载配置完成');
+  } catch (error) {
+    console.error('加载数据库配置失败:', error);
+    // 失败时使用默认配置
+    console.log('使用默认配置');
   }
 }
 
@@ -196,66 +231,140 @@ function getRandomEnterprise() {
   return enterprises[Math.floor(Math.random() * enterprises.length)]
 }
 
-function generateMockData() {
-  const rooms = []
+async function generateMockData() {
+  try {
+    // 从数据库加载实际的机房数据
+    const rooms = await loadRoomsFromDatabase();
+    
+    if (rooms.length > 0) {
+      realTimeData.rooms = rooms;
+    } else {
+      // 如果数据库没有数据，生成默认数据
+      const defaultRooms = [];
 
-  // 只生成指定的机房：2、3、4层的7号和9号机房
-  const targetFloors = [1, 2, 3, 4, 5]
-  const targetRooms = [7, 9]
+      // 只生成指定的机房：2、3、4层的7号和9号机房
+      const targetFloors = [1, 2, 3, 4, 5];
+      const targetRooms = [7, 9];
 
-  // 生成所有内圈机房（1-6号）
-  for (let floor = 1; floor <= buildingConfig.floors; floor++) {
-    for (let room = 1; room <= 6; room++) {
-      // 修改机房ID生成规则，特定机房使用新格式
-      let roomId
-      if (floor === 1 && room === 1) {
-        roomId = '1-1' // 101 改为 1-1
-      } else if (floor === 3 && room >= 1 && room <= 6) {
-        roomId = `3-${room}` // 301-306 改为 3-1 到 3-6
-      } else {
-        roomId = `${floor}${room.toString().padStart(2, '0')}` // 其他保持原格式
+      // 生成所有内圈机房（1-6号）
+      for (let floor = 1; floor <= buildingConfig.floors; floor++) {
+        for (let room = 1; room <= 6; room++) {
+          // 修改机房ID生成规则，特定机房使用新格式
+          let roomId;
+          if (floor === 1 && room === 1) {
+            roomId = '1-1'; // 101 改为 1-1
+          } else if (floor === 3 && room >= 1 && room <= 6) {
+            roomId = `3-${room}`; // 301-306 改为 3-1 到 3-6
+          } else {
+            roomId = `${floor}${room.toString().padStart(2, '0')}`; // 其他保持原格式
+          }
+          defaultRooms.push({
+            id: roomId,
+            floor,
+            room,
+            disk: Math.random() * 100,
+            temperature: 20 + Math.random() * 30,
+            status: Math.random() > 0.8 ? 'alert' : 'normal',
+            enterprise: Math.random() > 0.3 ? getRandomEnterprise() : null,
+            network: Math.random() * 1000,
+            isOuterRoom: false,
+            isEnabled: true,
+          });
+        }
       }
-      rooms.push({
-        id: roomId,
-        floor,
-        room,
-        disk: Math.random() * 100,
-        temperature: 20 + Math.random() * 30,
-        status: Math.random() > 0.8 ? 'alert' : 'normal',
-        enterprise: Math.random() > 0.3 ? getRandomEnterprise() : null,
-        network: Math.random() * 1000,
-        isOuterRoom: false,
-        isEnabled: true,
-      })
+
+      // 只生成指定的外圈机房
+      for (const floor of targetFloors) {
+        for (const room of targetRooms) {
+          const roomId = `${floor}${room.toString().padStart(2, '0')}`; // 改为：207, 209...
+          defaultRooms.push({
+            id: roomId,
+            floor,
+            room,
+            disk: Math.random() * 100,
+            temperature: 20 + Math.random() * 30,
+            status: Math.random() > 0.8 ? 'alert' : 'normal',
+            enterprise: Math.random() > 0.3 ? getRandomEnterprise() : null,
+            network: Math.random() * 1000,
+            isOuterRoom: true,
+            isEnabled: true,
+          });
+        }
+      }
+
+      realTimeData.rooms = defaultRooms;
     }
+  } catch (error) {
+    console.error('加载机房数据失败:', error);
+    // 失败时生成默认数据
+    const defaultRooms = [];
+    for (let floor = 1; floor <= buildingConfig.floors; floor++) {
+      for (let room = 1; room <= 6; room++) {
+        const roomId = `${floor}${room.toString().padStart(2, '0')}`;
+        defaultRooms.push({
+          id: roomId,
+          floor,
+          room,
+          disk: Math.random() * 100,
+          temperature: 20 + Math.random() * 30,
+          status: Math.random() > 0.8 ? 'alert' : 'normal',
+          enterprise: Math.random() > 0.3 ? getRandomEnterprise() : null,
+          network: Math.random() * 1000,
+          isOuterRoom: false,
+          isEnabled: true,
+        });
+      }
+    }
+    realTimeData.rooms = defaultRooms;
   }
 
-  // 只生成指定的外圈机房
-  for (const floor of targetFloors) {
-    for (const room of targetRooms) {
-      const roomId = `${floor}${room.toString().padStart(2, '0')}` // 改为：207, 209...
-      rooms.push({
-        id: roomId,
-        floor,
-        room,
-        disk: Math.random() * 100,
-        temperature: 20 + Math.random() * 30,
-        status: Math.random() > 0.8 ? 'alert' : 'normal',
-        enterprise: Math.random() > 0.3 ? getRandomEnterprise() : null,
-        network: Math.random() * 1000,
-        isOuterRoom: true,
-        isEnabled: true,
-      })
-    }
-  }
-
-  realTimeData.rooms = rooms
   realTimeData.networkTraffic = {
     in: Math.random() * 1000,
     out: Math.random() * 800,
-  }
+  };
   realTimeData.systemLoad = {
     disk: Math.random() * 100,
+  };
+}
+
+// 从数据库加载机房数据
+async function loadRoomsFromDatabase() {
+  try {
+    const response = await fetch('http://127.0.0.1:8002/api/config/data-center/1/floors');
+    if (response.ok) {
+      const floors = await response.json();
+      const rooms = [];
+      
+      for (const floor of floors) {
+        const floorRoomsResponse = await fetch(`http://127.0.0.1:8002/api/config/floors/${floor.id}/rooms`);
+        if (floorRoomsResponse.ok) {
+          const floorRooms = await floorRoomsResponse.json();
+          for (const room of floorRooms) {
+            // 转换为前端需要的格式
+            const roomId = `${floor.floor_number}${room.room_number.toString().padStart(2, '0')}`;
+            rooms.push({
+              id: roomId,
+              floor: floor.floor_number,
+              room: room.room_number,
+              disk: Math.random() * 100,
+              temperature: 20 + Math.random() * 30,
+              status: Math.random() > 0.8 ? 'alert' : 'normal',
+              enterprise: Math.random() > 0.3 ? getRandomEnterprise() : null,
+              network: Math.random() * 1000,
+              isOuterRoom: room.room_number > 6,
+              isEnabled: true,
+              shapeType: room.shape || 'rectangle',
+              color: room.color || '#6b7280'
+            });
+          }
+        }
+      }
+      return rooms;
+    }
+    return [];
+  } catch (error) {
+    console.error('从数据库加载机房数据失败:', error);
+    return [];
   }
 }
 
@@ -621,19 +730,27 @@ function getDominantEnterprise(roomId) {
 }
 
 function getRoomColor(roomId) {
-  const floorNumber = parseInt(roomId.charAt(0))
-  const roomNumber = parseInt(roomId.slice(-2))
+  // 从房间数据中获取颜色
+  const roomData = realTimeData.rooms.find(room => room.id === roomId);
+  if (roomData && roomData.color) {
+    // 将 hex 颜色转换为 THREE.js 颜色
+    return parseInt(roomData.color.replace('#', '0x'), 16);
+  }
+
+  //  fallback 逻辑
+  const floorNumber = parseInt(roomId.charAt(0));
+  const roomNumber = parseInt(roomId.slice(-2));
 
   // 其他楼层和外圈机房保持原有逻辑
   if (roomNumber >= 7 && roomNumber <= 12) {
-    return 0x0276db
+    return 0x0276db;
   }
 
-  const dominantEnterprise = getDominantEnterprise(roomId)
+  const dominantEnterprise = getDominantEnterprise(roomId);
   if (dominantEnterprise) {
-    return 0x19dfe6
+    return 0x19dfe6;
   }
-  return 0x6b7280
+  return 0x6b7280;
 }
 
 // === 交互设置 ===

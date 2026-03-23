@@ -17,6 +17,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 // 导入 Three.js 相关的工具函数，用于初始化场景、更新楼层可见性和清理资源
 import { initThreeScene, updateFloorVisibility, dispose } from '@/utils/three-helpers'
+// 导入配置 Store 以获取动态配置
+import { useConfigStore } from '@/stores/configStore'
 
 // 创建模板引用，用于获取 3D 画布容器的 DOM 元素
 const containerRef = ref<HTMLElement>()
@@ -28,11 +30,17 @@ let threeInstance: any = null
 
 // 组件挂载后的生命周期钩子
 onMounted(async () => {
+  const configStore = useConfigStore()
+  // 确保数据中心配置已加载
+  await configStore.loadDataCenterConfig()
+  
   // 确保容器元素存在后再初始化 Three.js 场景
   if (containerRef.value) {
     try {
       // 异步初始化 Three.js 场景，传入容器元素和配置选项
       threeInstance = await initThreeScene(containerRef.value, {
+        // 从数据库获取的楼层数，默认回退为5
+        floorCount: configStore.dataCenterConfig.floor_count || 5,
         // 机房点击事件回调函数，当用户点击机房时触发
         onRoomClick: (roomData: any) => {
           // 向父组件发射 'room-click' 事件，传递机房数据
