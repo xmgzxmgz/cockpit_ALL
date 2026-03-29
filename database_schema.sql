@@ -517,65 +517,65 @@ ON CONFLICT DO NOTHING;
 
 -- 6. 功能指标记录 (Feature Metrics) - 为图表提供数据
 INSERT INTO feature_metrics (feature_code, metric_key, metric_value, unit, collected_at) VALUES
-('1.01', 'temperature', '24.5', '°C', datetime('now', '-1 hour')),
-('1.01', 'temperature', '25.1', '°C', datetime('now', '-30 minutes')),
-('1.01', 'temperature', '23.8', '°C', datetime('now')),
-('1.01', 'humidity', '45', '%', datetime('now', '-1 hour')),
-('1.01', 'humidity', '48', '%', datetime('now')),
+('1.01', 'temperature', '24.5', '°C', NOW() - INTERVAL '1 hour'),
+('1.01', 'temperature', '25.1', '°C', NOW() - INTERVAL '30 minutes'),
+('1.01', 'temperature', '23.8', '°C', NOW()),
+('1.01', 'humidity', '45', '%', NOW() - INTERVAL '1 hour'),
+('1.01', 'humidity', '48', '%', NOW()),
 
-('2.01', 'pue', '1.45', '', datetime('now', '-4 hour')),
-('2.01', 'pue', '1.42', '', datetime('now', '-3 hour')),
-('2.01', 'pue', '1.39', '', datetime('now', '-2 hour')),
-('2.01', 'pue', '1.38', '', datetime('now', '-1 hour')),
-('2.01', 'pue', '1.35', '', datetime('now')),
+('2.01', 'pue', '1.45', '', NOW() - INTERVAL '4 hour'),
+('2.01', 'pue', '1.42', '', NOW() - INTERVAL '3 hour'),
+('2.01', 'pue', '1.39', '', NOW() - INTERVAL '2 hour'),
+('2.01', 'pue', '1.38', '', NOW() - INTERVAL '1 hour'),
+('2.01', 'pue', '1.35', '', NOW()),
 
-('3.01', 'cpu_temp', '55', '°C', datetime('now', '-2 hour')),
-('3.01', 'cpu_temp', '62', '°C', datetime('now', '-1 hour')),
-('3.01', 'cpu_temp', '58', '°C', datetime('now')),
+('3.01', 'cpu_temp', '55', '°C', NOW() - INTERVAL '2 hour'),
+('3.01', 'cpu_temp', '62', '°C', NOW() - INTERVAL '1 hour'),
+('3.01', 'cpu_temp', '58', '°C', NOW()),
 
-('4.01', 'traffic_in', '450', 'Mbps', datetime('now', '-1 hour')),
-('4.01', 'traffic_in', '890', 'Mbps', datetime('now')),
-('4.01', 'traffic_out', '320', 'Mbps', datetime('now', '-1 hour')),
-('4.01', 'traffic_out', '650', 'Mbps', datetime('now'));
+('4.01', 'traffic_in', '450', 'Mbps', NOW() - INTERVAL '1 hour'),
+('4.01', 'traffic_in', '890', 'Mbps', NOW()),
+('4.01', 'traffic_out', '320', 'Mbps', NOW() - INTERVAL '1 hour'),
+('4.01', 'traffic_out', '650', 'Mbps', NOW());
 
 -- 9. 环境读数 (Environment Readings)
 INSERT INTO environment_readings (room_id, sensor_type, value, unit, recorded_at) VALUES
-('201', 'temperature', 23.5, '°C', datetime('now')),
-('201', 'humidity', 45.0, '%', datetime('now')),
-('202', 'temperature', 22.8, '°C', datetime('now')),
-('202', 'humidity', 42.5, '%', datetime('now')),
-('203', 'temperature', 24.1, '°C', datetime('now')),
-('203', 'humidity', 48.2, '%', datetime('now'));
+('201', 'temperature', 23.5, '°C', NOW()),
+('201', 'humidity', 45.0, '%', NOW()),
+('202', 'temperature', 22.8, '°C', NOW()),
+('202', 'humidity', 42.5, '%', NOW()),
+('203', 'temperature', 24.1, '°C', NOW()),
+('203', 'humidity', 48.2, '%', NOW());
 
 -- 10. 电力事件 (Power Events)
 INSERT INTO power_events (room_id, event_type, severity, detail, occurred_at) VALUES
-('201', 'voltage_sag', 'warning', '监测到短暂电压暂降', datetime('now', '-2 days')),
-('203', 'ups_switch', 'info', 'UPS例行自检切换', datetime('now', '-5 days'));
+('201', 'voltage_sag', 'warning', '监测到短暂电压暂降', NOW() - INTERVAL '2 days'),
+('203', 'ups_switch', 'info', 'UPS例行自检切换', NOW() - INTERVAL '5 days');
 
 -- 11. 服务器指标 (Server Metrics)
 INSERT INTO server_metrics (server_name, metric_key, metric_value, unit, recorded_at) VALUES
-('SRV-A01-01', 'cpu_usage', '45', '%', datetime('now')),
-('SRV-A01-01', 'memory_usage', '62', '%', datetime('now')),
-('SRV-A01-01', 'disk_usage', '78', '%', datetime('now')),
-('SRV-B02-05', 'cpu_usage', '89', '%', datetime('now')), -- High load
-('SRV-B02-05', 'memory_usage', '91', '%', datetime('now'));
+('SRV-A01-01', 'cpu_usage', '45', '%', NOW()),
+('SRV-A01-01', 'memory_usage', '62', '%', NOW()),
+('SRV-A01-01', 'disk_usage', '78', '%', NOW()),
+('SRV-B02-05', 'cpu_usage', '89', '%', NOW()), -- High load
+('SRV-B02-05', 'memory_usage', '91', '%', NOW());
 
 -- 12. 网络指标 (Network Metrics)
 INSERT INTO network_metrics (link_name, metric_key, metric_value, unit, recorded_at) VALUES
-('Core-Switch-A', 'throughput', '8.5', 'Gbps', datetime('now')),
-('Core-Switch-A', 'latency', '2', 'ms', datetime('now')),
-('Edge-Router-1', 'packet_loss', '0.01', '%', datetime('now'));
+('Core-Switch-A', 'throughput', '8.5', 'Gbps', NOW()),
+('Core-Switch-A', 'latency', '2', 'ms', NOW()),
+('Edge-Router-1', 'packet_loss', '0.01', '%', NOW());
 
 -- 13. 应用指标 (Application Metrics)
 INSERT INTO application_metrics (app_name, metric_key, metric_value, unit, recorded_at) VALUES
-('Billing-Service', 'response_time', '120', 'ms', datetime('now')),
-('Auth-Service', 'response_time', '45', 'ms', datetime('now')),
-('Data-Pipeline', 'queue_depth', '5400', 'msg', datetime('now'));
+('Billing-Service', 'response_time', '120', 'ms', NOW()),
+('Auth-Service', 'response_time', '45', 'ms', NOW()),
+('Data-Pipeline', 'queue_depth', '5400', 'msg', NOW());
 
 -- 14. 安防事件 (Security Events)
 INSERT INTO security_events (event_type, severity, detail, occurred_at) VALUES
-('unauthorized_access', 'critical', '门禁系统检测到未授权卡片尝试进入204机房', datetime('now', '-1 hour')),
-('video_motion', 'info', '201机房G区检测到人员移动', datetime('now', '-15 minutes'));
+('unauthorized_access', 'critical', '门禁系统检测到未授权卡片尝试进入204机房', NOW() - INTERVAL '1 hour'),
+('video_motion', 'info', '201机房G区检测到人员移动', NOW() - INTERVAL '15 minutes');
 
 -- 15. 值班排班 (Oncall Schedules)
 INSERT INTO oncall_schedules (name, duty_user, days, start_time, end_time) VALUES
@@ -586,14 +586,14 @@ INSERT INTO oncall_schedules (name, duty_user, days, start_time, end_time) VALUE
 
 -- 16. 巡检报告 (Inspection Reports)
 INSERT INTO inspection_reports (report_date, summary, file_url) VALUES
-(datetime('now', '-1 day'), '2023年10月23日例行巡检，发现202机房空调异响，已报修。', '/reports/20231023.pdf'),
-(datetime('now', '-7 days'), '周度巡检报告，所有设备运行正常。', '/reports/20231016.pdf');
+(NOW() - INTERVAL '1 day', '2023年10月23日例行巡检，发现202机房空调异响，已报修。', '/reports/20231023.pdf'),
+(NOW() - INTERVAL '7 days', '周度巡检报告，所有设备运行正常。', '/reports/20231016.pdf');
 
 -- 17. 固件版本 (Firmware Inventory)
 INSERT INTO firmware_inventory (device_name, device_type, firmware_version, last_checked) VALUES
-('Core-Switch-01', 'Switch', 'v12.4.3', datetime('now')),
-('UPS-Main-A', 'UPS', 'v2.1.0', datetime('now')),
-('PDU-201-A01', 'PDU', 'v1.5.2', datetime('now'));
+('Core-Switch-01', 'Switch', 'v12.4.3', NOW()),
+('UPS-Main-A', 'UPS', 'v2.1.0', NOW()),
+('PDU-201-A01', 'PDU', 'v1.5.2', NOW());
 
 -- 18. 维保资产 (Maintenance Assets)
 INSERT INTO maintenance_assets (asset_name, asset_type, warranty_expiry) VALUES

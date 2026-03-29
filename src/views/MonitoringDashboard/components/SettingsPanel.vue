@@ -1,142 +1,292 @@
 <template>
-  <div class="settings-container">
+  <div class="fixed bottom-20 left-20 z-40 flex flex-col items-center">
     <!-- 消息提示 -->
-    <div v-if="message" class="message-toast">{{ message }}</div>
+    <div v-if="message" class="fixed bottom-32 left-10 bg-white p-3 rounded-lg shadow-lg text-sm z-50 animate-slide-up">
+      {{ message }}
+    </div>
 
     <!-- 设置按钮 -->
-    <button class="settings-button" @click="isDrawerOpen = true" title="打开配置面板" :disabled="loading">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <button 
+      class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-xl hover:scale-110 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed z-50 mb-2"
+      @click="isDrawerOpen = true" 
+      title="打开配置面板" 
+      :disabled="loading"
+    >
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
       </svg>
     </button>
+    <span class="text-white text-xs font-medium bg-black bg-opacity-70 px-2 py-1 rounded-md">设置</span>
 
     <!-- 配置抽屉 -->
-    <div v-if="isDrawerOpen" class="drawer-overlay" @click="isDrawerOpen = false"></div>
-    <div :class="['drawer', { 'drawer-open': isDrawerOpen }]">
-      <div class="drawer-header">
-        <h2>数据中心配置</h2>
-        <button class="close-button" @click="isDrawerOpen = false">✕</button>
+    <div v-if="isDrawerOpen" class="fixed inset-0 bg-black bg-opacity-50 z-39" @click="isDrawerOpen = false"></div>
+    <div :class="['fixed left-0 top-0 bottom-0 w-96 bg-white shadow-lg z-41 transition-all duration-300', isDrawerOpen ? 'translate-x-0' : '-translate-x-full']">
+      <div class="flex justify-between items-center p-5 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">数据中心配置</h2>
+        <button class="text-gray-500 hover:text-gray-800 transition-colors" @click="isDrawerOpen = false">✕</button>
       </div>
 
-      <div class="tabs">
-        <button v-for="tab in tabs" :key="tab" :class="['tab', { 'tab-active': activeTab === tab }]" @click="activeTab = tab">
+      <div class="flex border-b border-gray-200">
+        <button 
+          v-for="tab in tabs" 
+          :key="tab"
+          :class="['flex-1 py-3 text-sm transition-colors', activeTab === tab ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-600 hover:text-gray-800']"
+          @click="activeTab = tab"
+        >
           {{ tab }}
         </button>
       </div>
 
-      <div class="drawer-content">
+      <div class="p-5 overflow-y-auto">
         <!-- 基本配置 -->
-        <div v-if="activeTab === '基本配置'" class="tab-content">
-          <div class="form-group">
-            <label>数据中心名称</label>
-            <input v-model="config.name" type="text" placeholder="输入数据中心名称" :disabled="loading" />
+        <div v-if="activeTab === '基本配置'" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">数据中心名称</label>
+            <input 
+              v-model="config.name" 
+              type="text" 
+              placeholder="输入数据中心名称" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>楼层数</label>
-            <input v-model.number="config.floorCount" type="number" min="1" max="10" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">楼层数</label>
+            <input 
+              v-model.number="config.floorCount" 
+              type="number" 
+              min="1" 
+              max="10" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <button class="btn-primary" @click="saveBasicConfig" :disabled="loading">{{ loading ? '保存中...' : '保存基本配置' }}</button>
+          <button 
+            @click="saveBasicConfig" 
+            :disabled="loading"
+            class="w-full py-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{ loading ? '保存中...' : '保存基本配置' }}
+          </button>
         </div>
 
         <!-- 楼层配置 -->
-        <div v-if="activeTab === '楼层配置'" class="tab-content">
-          <div class="form-group">
-            <label>楼层编号</label>
-            <input v-model.number="floorConfig.floorNumber" type="number" min="1" :disabled="loading" />
+        <div v-if="activeTab === '楼层配置'" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">楼层编号</label>
+            <input 
+              v-model.number="floorConfig.floorNumber" 
+              type="number" 
+              min="1" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>楼层名称</label>
-            <input v-model="floorConfig.floorName" type="text" placeholder="例如：一楼" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">楼层名称</label>
+            <input 
+              v-model="floorConfig.floorName" 
+              type="text" 
+              placeholder="例如：一楼" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>楼层形状</label>
-            <select v-model="floorConfig.shape" :disabled="loading">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">楼层形状</label>
+            <select 
+              v-model="floorConfig.shape" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            >
               <option value="rectangle">正方形</option>
               <option value="trapezoid">梯形</option>
               <option value="circle">圆形</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>宽度 (m)</label>
-            <input v-model.number="floorConfig.width" type="number" min="10" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">宽度 (m)</label>
+            <input 
+              v-model.number="floorConfig.width" 
+              type="number" 
+              min="10" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>深度 (m)</label>
-            <input v-model.number="floorConfig.depth" type="number" min="10" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">深度 (m)</label>
+            <input 
+              v-model.number="floorConfig.depth" 
+              type="number" 
+              min="10" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <button class="btn-primary" @click="saveFloorConfig" :disabled="loading">{{ loading ? '保存中...' : '保存楼层配置' }}</button>
+          <button 
+            @click="saveFloorConfig" 
+            :disabled="loading"
+            class="w-full py-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{ loading ? '保存中...' : '保存楼层配置' }}
+          </button>
         </div>
 
         <!-- 机房配置 -->
-        <div v-if="activeTab === '机房配置'" class="tab-content">
-          <div class="form-group">
-            <label>机房编号</label>
-            <input v-model.number="roomConfig.roomNumber" type="number" min="1" :disabled="loading" />
+        <div v-if="activeTab === '机房配置'" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">机房编号</label>
+            <input 
+              v-model.number="roomConfig.roomNumber" 
+              type="number" 
+              min="1" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>机房名称</label>
-            <input v-model="roomConfig.roomName" type="text" placeholder="例如：机房 A" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">机房名称</label>
+            <input 
+              v-model="roomConfig.roomName" 
+              type="text" 
+              placeholder="例如：机房 A" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>机房形状</label>
-            <select v-model="roomConfig.shape" :disabled="loading">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">机房形状</label>
+            <select 
+              v-model="roomConfig.shape" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            >
               <option value="rectangle">正方形</option>
               <option value="trapezoid">梯形</option>
               <option value="circle">圆形</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>机柜数</label>
-            <input v-model.number="roomConfig.cabinetCount" type="number" min="1" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">机柜数</label>
+            <input 
+              v-model.number="roomConfig.cabinetCount" 
+              type="number" 
+              min="1" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>位置 X</label>
-            <input v-model.number="roomConfig.positionX" type="number" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">位置 X</label>
+            <input 
+              v-model.number="roomConfig.positionX" 
+              type="number" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>位置 Y</label>
-            <input v-model.number="roomConfig.positionY" type="number" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">位置 Y</label>
+            <input 
+              v-model.number="roomConfig.positionY" 
+              type="number" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <button class="btn-primary" @click="saveRoomConfig" :disabled="loading">{{ loading ? '保存中...' : '保存机房配置' }}</button>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">机房颜色</label>
+            <input 
+              v-model="roomConfig.color" 
+              type="color" 
+              :disabled="loading"
+              class="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
+          </div>
+          <button 
+            @click="saveRoomConfig" 
+            :disabled="loading"
+            class="w-full py-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{ loading ? '保存中...' : '保存机房配置' }}
+          </button>
         </div>
 
         <!-- 机柜排列配置 -->
-        <div v-if="activeTab === '机柜排列'" class="tab-content">
-          <div class="form-group">
-            <label>排列方式</label>
-            <select v-model="layoutConfig.layoutType" :disabled="loading">
+        <div v-if="activeTab === '机柜排列'" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">排列方式</label>
+            <select 
+              v-model="layoutConfig.layoutType" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            >
               <option value="row">行列排列</option>
               <option value="circle">圆形排列</option>
               <option value="custom">自定义</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>列数</label>
-            <input v-model.number="layoutConfig.columns" type="number" min="1" max="20" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">列数</label>
+            <input 
+              v-model.number="layoutConfig.columns" 
+              type="number" 
+              min="1" 
+              max="20" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>行数</label>
-            <input v-model.number="layoutConfig.rows" type="number" min="1" max="20" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">行数</label>
+            <input 
+              v-model.number="layoutConfig.rows" 
+              type="number" 
+              min="1" 
+              max="20" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <div class="form-group">
-            <label>间距 (m)</label>
-            <input v-model.number="layoutConfig.spacing" type="number" min="0.1" step="0.1" :disabled="loading" />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">间距 (m)</label>
+            <input 
+              v-model.number="layoutConfig.spacing" 
+              type="number" 
+              min="0.1" 
+              step="0.1" 
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+            />
           </div>
-          <button class="btn-primary" @click="saveLayoutConfig" :disabled="loading">{{ loading ? '保存中...' : '保存排列配置' }}</button>
-          <button class="btn-secondary" @click="openGridEditor" :disabled="loading">打开网格编辑器</button>
+          <button 
+            @click="saveLayoutConfig" 
+            :disabled="loading"
+            class="w-full py-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{ loading ? '保存中...' : '保存排列配置' }}
+          </button>
+          <button 
+            @click="openGridEditor" 
+            :disabled="loading"
+            class="w-full py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            打开网格编辑器
+          </button>
         </div>
       </div>
     </div>
 
     <!-- 网格编辑器模态框 -->
-    <div v-if="showGridEditor" class="modal-overlay" @click="showGridEditor = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>机房内部排列编辑器</h3>
-          <button class="close-button" @click="showGridEditor = false">✕</button>
+    <div v-if="showGridEditor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl max-w-4xl w-9/10 max-h-[90vh] flex flex-col">
+        <div class="flex justify-between items-center p-5 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-800">机房内部排列编辑器</h3>
+          <button class="text-gray-500 hover:text-gray-800 transition-colors" @click="showGridEditor = false">✕</button>
         </div>
-        <div class="modal-body">
+        <div class="flex-1 overflow-y-auto p-5">
           <CabinetGridEditor :room-id="selectedRoomId" @save="handleGridSave" />
         </div>
       </div>
@@ -163,7 +313,7 @@ const tabs = ['基本配置', '楼层配置', '机房配置', '机柜排列'];
 
 const config = ref({ name: '北京数据中心', floorCount: 3 });
 const floorConfig = ref({ floorNumber: 1, floorName: '一楼', shape: 'rectangle', width: 100, depth: 100 });
-const roomConfig = ref({ roomNumber: 1, roomName: '机房 A', shape: 'rectangle', cabinetCount: 100, positionX: 0, positionY: 0, positionZ: 0, rotation: 0, width: 50, depth: 50, height: 30 });
+const roomConfig = ref({ roomNumber: 1, roomName: '机房 A', shape: 'rectangle', cabinetCount: 100, positionX: 0, positionY: 0, positionZ: 0, rotation: 0, width: 50, depth: 50, height: 30, color: '#6b7280' });
 const layoutConfig = ref({ layoutType: 'row', columns: 10, rows: 10, spacing: 1.0, startPositionX: 0, startPositionY: 0 });
 
 // 加载已保存的配置
@@ -279,6 +429,7 @@ const saveRoomConfig = async () => {
         room_number: roomConfig.value.roomNumber,
         room_name: roomConfig.value.roomName,
         shape: roomConfig.value.shape,
+        color: roomConfig.value.color,
         cabinet_count: roomConfig.value.cabinetCount,
         position_x: roomConfig.value.positionX,
         position_y: roomConfig.value.positionY,
@@ -360,27 +511,7 @@ const handleGridSave = async () => {
 </script>
 
 <style scoped>
-.settings-container {
-  position: fixed;
-  bottom: 40px;
-  left: 40px;
-  z-index: 40;
-}
-
-.message-toast {
-  position: fixed;
-  bottom: 120px;
-  left: 40px;
-  background: white;
-  padding: 12px 16px;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  font-size: 14px;
-  z-index: 50;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
+@keyframes slide-up {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -391,240 +522,7 @@ const handleGridSave = async () => {
   }
 }
 
-.settings-button {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-}
-
-.settings-button:hover:not(:disabled) {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-.settings-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 39;
-}
-
-.drawer {
-  position: fixed;
-  right: -400px;
-  top: 0;
-  bottom: 0;
-  width: 400px;
-  background: white;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
-  z-index: 41;
-  transition: right 0.3s ease;
-  display: flex;
-  flex-direction: column;
-}
-
-.drawer-open {
-  right: 0;
-}
-
-.drawer-header {
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.drawer-header h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 4px;
-  font-size: 20px;
-}
-
-.close-button:hover {
-  color: #1f2937;
-}
-
-.tabs {
-  display: flex;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 0 20px;
-}
-
-.tab {
-  flex: 1;
-  padding: 12px 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  font-size: 14px;
-  border-bottom: 2px solid transparent;
-  transition: all 0.3s ease;
-}
-
-.tab:hover {
-  color: #1f2937;
-}
-
-.tab-active {
-  color: #667eea;
-  border-bottom-color: #667eea;
-}
-
-.drawer-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
-.tab-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1f2937;
-}
-
-.form-group input,
-.form-group select {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.form-group input:disabled,
-.form-group select:disabled {
-  background: #f3f4f6;
-  cursor: not-allowed;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: #f3f4f6;
-  color: #1f2937;
-  margin-top: 8px;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #e5e7eb;
-}
-
-.btn-secondary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
-  max-width: 800px;
-  width: 90%;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
+.animate-slide-up {
+  animation: slide-up 0.3s ease;
 }
 </style>

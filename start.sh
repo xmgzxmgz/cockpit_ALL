@@ -25,48 +25,32 @@ if ! docker info &> /dev/null; then
     exit 1
 fi
 
-# 开发环境使用 SQLite 数据库，避免端口冲突
-echo "🔧 初始化 SQLite 数据库..."
-
-# 使用当前目录作为工作目录
-db_path="$(pwd)/cockpit.db"
-sql_path="$(pwd)/database_schema.sql"
-
-# 删除现有的数据库文件，确保创建新的表结构
-if [ -f "$db_path" ]; then
-    echo "删除现有数据库文件..."
-    rm "$db_path"
+# 检查并启动 PostgreSQL 容器
+echo "🔧 检查 PostgreSQL 数据库容器..."
+if docker ps -a | grep -q cockpit-db; then
+    if docker ps | grep -q cockpit-db; then
+        echo "✅ PostgreSQL 容器已在运行"
+    else
+        echo "🔧 启动 PostgreSQL 容器..."
+        docker start cockpit-db
+        sleep 5
+        echo "✅ PostgreSQL 容器已启动"
+    fi
+else
+    echo "🔧 创建并启动 PostgreSQL 容器..."
+    docker run --name cockpit-db -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=password -e POSTGRES_DB=cockpit -p 5432:5432 -d postgres:15-alpine
+    sleep 10
+    echo "✅ PostgreSQL 容器已创建并启动"
 fi
 
-python3 -c "
-import sqlite3
-import os
-
-# 获取数据库文件路径
-db_path = '$db_path'
-sql_path = '$sql_path'
-
-# 连接数据库
-conn = sqlite3.connect(db_path)
-cur = conn.cursor()
-
-# 读取 SQL 脚本
-with open(sql_path, 'r') as f:
-    sql = f.read()
-
-# 执行 SQL 脚本
-print('执行 SQL 脚本...')
-try:
-    cur.executescript(sql)
-    conn.commit()
-    print('✅ 数据库初始化完成')
-except Exception as e:
-    print(f'❌ 数据库初始化失败: {e}')
-    conn.rollback()
-finally:
-    conn.close()
-"
-echo "✅ SQLite 数据库初始化完成"
+# 初始化 PostgreSQL 数据库
+echo "🔧 初始化 PostgreSQL 数据库..."
+docker exec -i cockpit-db psql -U admin -d cockpit < database_schema.sql
+if [ $? -eq 0 ]; then
+    echo "✅ PostgreSQL 数据库初始化完成"
+else
+    echo "⚠️  PostgreSQL 数据库初始化可能失败，但继续运行"
+fi
 
 # 启动后端服务
 echo "🔧 启动后端服务..."
@@ -79,6 +63,7 @@ if lsof -i :8002 &> /dev/null; then
 fi
 
 cd backend
+export DATABASE_URL="postgresql://admin:password@localhost:5432/cockpit"
 python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload &
 BACKEND_PID=$!
 cd ..

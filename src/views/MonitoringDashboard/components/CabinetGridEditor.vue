@@ -1,185 +1,171 @@
 <template>
-  <div class="grid-editor">
-    <div class="grid-container">
-      <div class="grid" @mousedown="startSelection" @mousemove="updateSelection" @mouseup="endSelection" @mouseleave="endSelection">
-        <div v-for="(row, y) in gridData" :key="y" class="grid-row">
-          <div v-for="(cell, x) in row" :key="x" :class="['grid-cell', { 'occupied': cell.is_occupied, 'selected': cell.selected }]" :data-x="x" :data-y="y"></div>
+  <div class="space-y-4">
+    <div class="flex justify-between items-center">
+      <h4 class="text-sm font-medium text-gray-700">机柜网格编辑器</h4>
+      <div class="flex space-x-2">
+        <button 
+          @click="clearSelection" 
+          class="px-3 py-1 text-xs bg-gray-100 text-gray-800 rounded hover:bg-gray-200 transition-colors"
+        >
+          清空选择
+        </button>
+        <button 
+          @click="saveSelection" 
+          class="px-3 py-1 text-xs bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors"
+        >
+          保存选择
+        </button>
+      </div>
+    </div>
+
+    <div class="grid-container overflow-auto border border-gray-200 rounded-md p-2">
+      <div 
+        class="grid" 
+        :style="{
+          gridTemplateColumns: `repeat(${columns}, minmax(30px, 1fr))`,
+          gridTemplateRows: `repeat(${rows}, minmax(30px, 1fr))`,
+          gap: '2px'
+        }"
+      >
+        <div
+          v-for="(cell, index) in gridCells"
+          :key="index"
+          :class="[
+            'grid-cell flex items-center justify-center text-xs font-medium cursor-pointer transition-colors',
+            cell.isOccupied ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+            cell.isSelected ? 'ring-2 ring-indigo-500' : ''
+          ]"
+          @click="toggleCell(index)"
+        >
+          {{ cell.id }}
         </div>
       </div>
     </div>
-    <div class="controls">
-      <button class="btn-select" @click="toggleSelectMode">{{ selectMode ? '取消框选' : '框选模式' }}</button>
-      <button class="btn-clear" @click="clearSelection">清空选择</button>
-      <button class="btn-save" @click="saveGrid">保存配置</button>
+
+    <div class="flex justify-between text-sm text-gray-600">
+      <div>已选择: {{ selectedCount }} 个机柜</div>
+      <div>总机柜数: {{ totalCount }}</div>
+    </div>
+
+    <div class="mt-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">输入机柜编号（用逗号分隔）</label>
+      <input 
+        v-model="cabinetIds" 
+        type="text" 
+        placeholder="例如：1,3,5-10"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+      />
+      <button 
+        @click="selectByIds" 
+        class="mt-2 px-3 py-1 text-xs bg-gray-100 text-gray-800 rounded hover:bg-gray-200 transition-colors"
+      >
+        应用选择
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
-const props = defineProps<{ roomId: number }>();
-const emit = defineEmits<{ save: [] }>();
+const props = defineProps<{
+  roomId: number;
+}>();
 
-const gridData = ref<Array<Array<{ is_occupied: boolean; selected: boolean }>>>([]);
-const selectMode = ref(false);
-const isSelecting = ref(false);
-const startX = ref(0);
-const startY = ref(0);
+const emit = defineEmits<{
+  (e: 'save'): void;
+}>();
 
-onMounted(async () => {
-  // 初始化 10x10 网格
-  await initGrid();
-  // 加载已有的网格数据
-  await loadGrid();
+const columns = ref(10);
+const rows = ref(10);
+const gridCells = ref<Array<{ id: string; isOccupied: boolean; isSelected: boolean }>>([]);
+const cabinetIds = ref('');
+
+const selectedCount = computed(() => {
+  return gridCells.value.filter(cell => cell.isSelected).length;
 });
 
-const initGrid = async () => {
-  try {
-    await fetch(`http://127.0.0.1:8002/api/config/rooms/${props.roomId}/grid/init`, { method: 'POST' });
-  } catch (error) {
-    console.error('初始化网格失败:', error);
-  }
-};
+const totalCount = computed(() => {
+  return gridCells.value.length;
+});
 
-const loadGrid = async () => {
-  try {
-    const response = await fetch(`http://127.0.0.1:8002/api/config/rooms/${props.roomId}/grid`);
-    const data = await response.json();
-    
-    // 创建 10x10 网格
-    const grid: Array<Array<{ is_occupied: boolean; selected: boolean }>> = [];
-    for (let y = 0; y < 10; y++) {
-      grid[y] = [];
-      for (let x = 0; x < 10; x++) {
-        const cell = data.find((c: any) => c.grid_x === x && c.grid_y === y);
-        grid[y][x] = { is_occupied: cell?.is_occupied || false, selected: false };
-      }
-    }
-    gridData.value = grid;
-  } catch (error) {
-    console.error('加载网格失败:', error);
-    // 创建空网格
-    const grid: Array<Array<{ is_occupied: boolean; selected: boolean }>> = [];
-    for (let y = 0; y < 10; y++) {
-      grid[y] = [];
-      for (let x = 0; x < 10; x++) {
-        grid[y][x] = { is_occupied: false, selected: false };
-      }
-    }
-    gridData.value = grid;
-  }
-};
+onMounted(() => {
+  initGrid();
+});
 
-const toggleSelectMode = () => {
-  selectMode.value = !selectMode.value;
-};
-
-const startSelection = (e: MouseEvent) => {
-  if (!selectMode.value) return;
-  const target = e.target as HTMLElement;
-  if (!target.classList.contains('grid-cell')) return;
-  
-  isSelecting.value = true;
-  const x = parseInt(target.getAttribute('data-x') || '0');
-  const y = parseInt(target.getAttribute('data-y') || '0');
-  startX.value = x;
-  startY.value = y;
-};
-
-const updateSelection = (e: MouseEvent) => {
-  if (!isSelecting.value || !selectMode.value) return;
-  
-  const target = e.target as HTMLElement;
-  if (!target.classList.contains('grid-cell')) return;
-  
-  const endX = parseInt(target.getAttribute('data-x') || '0');
-  const endY = parseInt(target.getAttribute('data-y') || '0');
-  
-  // 清空之前的选择
-  for (let y = 0; y < 10; y++) {
-    for (let x = 0; x < 10; x++) {
-      gridData.value[y][x].selected = false;
+const initGrid = () => {
+  const cells = [];
+  for (let row = 0; row < rows.value; row++) {
+    for (let col = 0; col < columns.value; col++) {
+      cells.push({
+        id: `${row + 1}-${col + 1}`,
+        isOccupied: false,
+        isSelected: false
+      });
     }
   }
-  
-  // 框选范围内的格子
-  const minX = Math.min(startX.value, endX);
-  const maxX = Math.max(startX.value, endX);
-  const minY = Math.min(startY.value, endY);
-  const maxY = Math.max(startY.value, endY);
-  
-  for (let y = minY; y <= maxY; y++) {
-    for (let x = minX; x <= maxX; x++) {
-      gridData.value[y][x].selected = true;
-    }
-  }
+  gridCells.value = cells;
 };
 
-const endSelection = () => {
-  if (!isSelecting.value) return;
-  isSelecting.value = false;
-  
-  // 将选中的格子标记为已占用
-  for (let y = 0; y < 10; y++) {
-    for (let x = 0; x < 10; x++) {
-      if (gridData.value[y][x].selected) {
-        gridData.value[y][x].is_occupied = true;
-        gridData.value[y][x].selected = false;
-      }
-    }
-  }
+const toggleCell = (index: number) => {
+  gridCells.value[index].isSelected = !gridCells.value[index].isSelected;
 };
 
 const clearSelection = () => {
-  for (let y = 0; y < 10; y++) {
-    for (let x = 0; x < 10; x++) {
-      gridData.value[y][x].is_occupied = false;
-      gridData.value[y][x].selected = false;
-    }
-  }
+  gridCells.value.forEach(cell => {
+    cell.isSelected = false;
+  });
 };
 
-const saveGrid = async () => {
-  try {
-    // 批量保存网格数据
-    for (let y = 0; y < 10; y++) {
-      for (let x = 0; x < 10; x++) {
-        const cell = gridData.value[y][x];
-        await fetch('http://127.0.0.1:8002/api/config/cabinet-grid', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            room_id: props.roomId,
-            grid_x: x,
-            grid_y: y,
-            is_occupied: cell.is_occupied,
-          }),
-        });
+const saveSelection = async () => {
+  // 模拟保存到数据库
+  const selectedCells = gridCells.value.filter(cell => cell.isSelected);
+  console.log('保存选中的机柜:', selectedCells);
+  
+  // 标记选中的机柜为已占用
+  gridCells.value.forEach(cell => {
+    if (cell.isSelected) {
+      cell.isOccupied = true;
+    }
+  });
+  
+  emit('save');
+};
+
+const selectByIds = () => {
+  const ids = cabinetIds.value.split(',').map(id => id.trim());
+  clearSelection();
+  
+  ids.forEach(id => {
+    if (id.includes('-')) {
+      // 处理范围，如 5-10
+      const [start, end] = id.split('-').map(Number);
+      if (!isNaN(start) && !isNaN(end)) {
+        for (let i = start - 1; i < end; i++) {
+          if (i < gridCells.value.length) {
+            gridCells.value[i].isSelected = true;
+          }
+        }
+      }
+    } else {
+      // 处理单个编号
+      const index = Number(id) - 1;
+      if (!isNaN(index) && index >= 0 && index < gridCells.value.length) {
+        gridCells.value[index].isSelected = true;
       }
     }
-    emit('save');
-  } catch (error) {
-    console.error('保存网格失败:', error);
-  }
+  });
 };
 </script>
 
 <style scoped>
-.grid-editor { display: flex; flex-direction: column; gap: 20px; }
-.grid-container { display: flex; justify-content: center; }
-.grid { display: grid; grid-template-columns: repeat(10, 40px); gap: 2px; padding: 20px; background: #f3f4f6; border-radius: 8px; }
-.grid-row { display: contents; }
-.grid-cell { width: 40px; height: 40px; background: white; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
-.grid-cell:hover { background: #f0f9ff; border-color: #667eea; }
-.grid-cell.occupied { background: #667eea; border-color: #667eea; }
-.grid-cell.selected { background: #fbbf24; border-color: #f59e0b; }
-.controls { display: flex; gap: 10px; justify-content: center; }
-.btn-select, .btn-clear, .btn-save { padding: 10px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; }
-.btn-select { background: #f3f4f6; color: #1f2937; }
-.btn-select:hover { background: #e5e7eb; }
-.btn-clear { background: #fee2e2; color: #991b1b; }
-.btn-clear:hover { background: #fecaca; }
-.btn-save { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-.btn-save:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+.grid-container {
+  max-height: 400px;
+}
+
+.grid-cell {
+  aspect-ratio: 1;
+  min-height: 30px;
+  min-width: 30px;
+}
 </style>
