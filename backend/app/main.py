@@ -1487,3 +1487,7 @@ def send_multi_channel_alert(payload: AlertNotificationRequest, db: Session = De
 # ==================== 注册配置路由 ====================
 from .routers import config
 app.include_router(config.router)
+
+# ==================== 注册机房布局路由 ====================
+from .routers import room_layout
+app.include_router(room_layout.router)

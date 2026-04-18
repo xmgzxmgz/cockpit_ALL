@@ -66,10 +66,14 @@
                     :style="{
                       backgroundColor: rack.enabled ? rack.color : '#f8fafc',
                       borderColor: rack.enabled ? rack.color : '#e2e8f0',
+                      gridRow: rack.position?.row || 1,
+                      gridColumn: rack.position?.col || 1,
                     }"
                     @click="handleRackClick(rack, $event)"
+                    @mouseenter="handleRackMouseEnter(rack, $event)"
+                    @mouseleave="handleRackMouseLeave"
                   >
-                    <span class="rack-number">{{ rack.visibleIndex }}</span>
+                    <span class="rack-number">{{ rack.id }}</span>
                   </div>
                 </template>
                 <div v-else class="text-gray-500">机房布局数据加载中...</div>
@@ -84,6 +88,26 @@
                   @close="handleRackDashboardClose"
                 />
               </Teleport>
+
+              <!-- 机柜悬停提示框 -->
+              <div
+                v-if="activeRackDetails.rack"
+                class="rack-tooltip"
+                :style="tooltipStyle"
+              >
+                <div class="tooltip-header">
+                  <h4>机柜详情</h4>
+                </div>
+                <div class="tooltip-content">
+                  <p><strong>机柜编号:</strong> {{ activeRackDetails.rack.id }}</p>
+                  <p><strong>位置:</strong> 行 {{ activeRackDetails.rack.position?.row || 0 }}, 列 {{ activeRackDetails.rack.position?.col || 0 }}</p>
+                  <p><strong>企业:</strong> {{ activeRackDetails.rack.enterprise || '未分配' }}</p>
+                  <p><strong>状态:</strong> {{ activeRackDetails.rack.enabled ? '启用' : '禁用' }}</p>
+                  <p v-if="activeRackDetails.rack.maintainer"><strong>维护人:</strong> {{ activeRackDetails.rack.maintainer }}</p>
+                  <p v-if="activeRackDetails.rack.KHMANAGE"><strong>客户经理:</strong> {{ activeRackDetails.rack.KHMANAGE }}</p>
+                  <p v-if="activeRackDetails.rack.name"><strong>名称:</strong> {{ activeRackDetails.rack.name }}</p>
+                </div>
+              </div>
 
               <!-- 区域框架覆盖层 -->
               <div
@@ -162,6 +186,29 @@ const handleRackClick = (rack: any, event: MouseEvent) => {
   showRackDashboard.value = true;
 };
 
+/**
+ * 处理机柜鼠标悬停事件，显示机柜详细信息。
+ * @param rack - 机柜数据。
+ * @param event - 鼠标事件对象。
+ */
+const handleRackMouseEnter = (rack: any, event: MouseEvent) => {
+  // 阻止事件冒泡
+  event.stopPropagation();
+
+  activeRackDetails.value = {
+    rack: rack,
+    x: event.clientX,
+    y: event.clientY,
+  };
+};
+
+/**
+ * 处理机柜鼠标离开事件，隐藏机柜详细信息。
+ */
+const handleRackMouseLeave = () => {
+  activeRackDetails.value.rack = null;
+};
+
 const handleRackDashboardClose = () => {
   showRackDashboard.value = false;
   selectedRack.value = null;
@@ -226,18 +273,12 @@ const tooltipStyle = computed(() => {
 const updateTrigger = ref(0);
 
 // 使用 watchEffect 自动在组件挂载和 props.roomData 变化时更新
-watchEffect(() => {
-  // 只有在机房未初始化时才进行初始化，避免覆盖现有配置
-  if (!rackController.isRoomInitialized(props.roomData.id)) {
-    if (import.meta.env.DEV) {
-      console.log(`机房 ${props.roomData.id} 未初始化，正在初始化...`);
-    }
-    initializeRoom(props.roomData.id);
-  } else {
-    if (import.meta.env.DEV) {
-      console.log(`机房 ${props.roomData.id} 已存在，使用现有配置`);
-    }
+watchEffect(async () => {
+  // 每次打开都从数据库刷新数据，确保获取最新的随机排序和企业分配
+  if (import.meta.env.DEV) {
+    console.log(`正在从数据库刷新机房 ${props.roomData.id} 数据...`);
   }
+  await initializeRoom(props.roomData.id);
 
   // 检查是否有传入的布局命令，如果有则执行
   if (
@@ -249,10 +290,17 @@ watchEffect(() => {
 });
 
 // 自动调用数据
-onMounted(() => {
-  simulateDataReception();
+onMounted(async () => {
+  // 强制从数据库刷新机房数据
+  try {
+    await import('@/utils/roomLayoutService').then(({ refreshRoom }) => refreshRoom(props.roomData.id))
+    console.log(`强制从数据库刷新机房 ${props.roomData.id} 数据`)
+  } catch (error) {
+    console.error('刷新数据库数据失败:', error)
+  }
+  simulateDataReception()
   // 添加全局点击事件监听器
-  document.addEventListener("click", handleClickOutside);
+  document.addEventListener("click", handleClickOutside)
 });
 
 onUnmounted(() => {
@@ -463,6 +511,44 @@ const handleClose = () => {
 <style scoped>
 @import "@/styles/panels.css";
 @import "@/styles/room-layout.css";
+
+/* 机柜悬停提示框样式 */
+.rack-tooltip {
+  position: fixed;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 12px;
+  z-index: 1000;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.tooltip-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.tooltip-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.tooltip-content p {
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #4a5568;
+}
+
+.tooltip-content strong {
+  color: #1a202c;
+  font-weight: 500;
+}
 
 /* ... 样式代码保持不变 ... */
 

@@ -342,7 +342,9 @@ export class RackController {
       return []
     }
 
-    return Array.from(layout.racks.values()).filter((rack) => rack.enabled)
+    return Array.from(layout.racks.values())
+      .filter((rack) => rack.enabled)
+      .sort((a, b) => (a.visibleIndex || 0) - (b.visibleIndex || 0))
   }
 
   /**
@@ -358,40 +360,37 @@ export class RackController {
     }
 
     const racks = Array.from(layout.racks.values())
+      .filter((rack) => rack.enabled)
 
     if (!hideUnassigned) {
       // 返回所有启用的机柜，确保isHidden属性正确设置
-      return racks
-        .filter((rack) => rack.enabled)
-        .map((rack, index) => ({
-          ...rack,
-          isHidden: false,
-          visibleIndex: index + 1, // 添加可见机柜的序号
-        }))
+      return racks.map((rack, index) => ({
+        ...rack,
+        isHidden: false,
+        visibleIndex: index + 1, // 添加可见机柜的序号
+      }))
     }
 
     // 返回完整布局，但为未分配企业的机柜添加隐藏标记
     let visibleIndex = 0
-    return racks
-      .filter((rack) => rack.enabled)
-      .map((rack) => {
-        if (!rack.enterprise) {
-          // 空闲机柜：保持位置但标记为隐藏
-          return {
-            ...rack,
-            isHidden: true,
-            color: 'transparent',
-          }
-        } else {
-          // 为可见机柜分配序号
-          visibleIndex++
-          return {
-            ...rack,
-            isHidden: false,
-            visibleIndex: visibleIndex, // 添加可见机柜的序号
-          }
+    return racks.map((rack) => {
+      if (!rack.enterprise) {
+        // 空闲机柜：保持位置但标记为隐藏
+        return {
+          ...rack,
+          isHidden: true,
+          color: 'transparent',
         }
-      })
+      } else {
+        // 为可见机柜分配序号
+        visibleIndex++
+        return {
+          ...rack,
+          isHidden: false,
+          visibleIndex: visibleIndex, // 添加可见机柜的序号
+        }
+      }
+    })
   }
 
   /**

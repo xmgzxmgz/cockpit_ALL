@@ -341,7 +341,14 @@ async function loadRoomsFromDatabase() {
           const floorRooms = await floorRoomsResponse.json();
           for (const room of floorRooms) {
             // 转换为前端需要的格式
-            const roomId = `${floor.floor_number}${room.room_number.toString().padStart(2, '0')}`;
+            let roomId;
+            if (floor.floor_number === 1 && room.room_number === 1) {
+              roomId = '1-1'; // 101 改为 1-1
+            } else if (floor.floor_number === 3 && room.room_number >= 1 && room.room_number <= 6) {
+              roomId = `3-${room.room_number}`; // 301-306 改为 3-1 到 3-6
+            } else {
+              roomId = `${floor.floor_number}${room.room_number.toString().padStart(2, '0')}`; // 其他保持原格式
+            }
             rooms.push({
               id: roomId,
               floor: floor.floor_number,

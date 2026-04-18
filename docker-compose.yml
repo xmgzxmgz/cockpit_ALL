@@ -1,41 +1,27 @@
+# Cockpit Database Docker Compose Configuration
+# 仅运行 PostgreSQL 数据库在 Docker 中，系统本身不在 Docker 中运行
+
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: cockpit-frontend
-    ports:
-      - "5174:80"
-    depends_on:
-      - backend
-    restart: always
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: cockpit-backend
-    ports:
-      - "8002:8000"
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/cockpit_db
-    depends_on:
-      - db
-    restart: always
-
   db:
     image: postgres:15-alpine
     container_name: cockpit-db
     ports:
-      - "5433:5432"
+      - "5434:5432"
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=cockpit_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/room_layout_schema.sql:/docker-entrypoint-initdb.d/room_layout_schema.sql
       - ./database_schema.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: always
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d cockpit_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
+    driver: local

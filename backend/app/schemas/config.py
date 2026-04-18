@@ -69,6 +69,7 @@ class RoomConfigBase(BaseModel):
     room_number: int
     room_name: Optional[str] = None
     shape: str = "rectangle"
+    color: str = "#6b7280"
     cabinet_count: int = 0
     position_x: float = 0
     position_y: float = 0
