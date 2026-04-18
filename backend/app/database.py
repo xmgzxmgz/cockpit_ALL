@@ -15,16 +15,8 @@ from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import os
 
-import pathlib
-
-_DEFAULT_DB = f"sqlite:///{pathlib.Path(__file__).resolve().parents[2] / 'cockpit.db'}"
-DATABASE_URL = os.getenv("DATABASE_URL", _DEFAULT_DB)
-
-# SQLite 需要额外参数避免多线程错误。PostgreSQL 则直接连接。
-if DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-else:
-    engine = create_engine(DATABASE_URL)
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5434/cockpit_db")
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

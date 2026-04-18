@@ -392,19 +392,43 @@ const handleRoomTagClick = (roomId: string) => {
 const fetchEnterpriseDetails = async () => {
   try {
     loading.value = true;
-    const response = await getEnterpriseRoomStatsByName(customerName.value);
+    // 从后端API获取实际的企业统计数据
+    const response = await fetch('http://127.0.0.1:8002/api/config/enterprise-stats');
 
-    if (response.success) {
-      // 为每个企业添加颜色和客户经理信息
-      enterpriseData.value = response.data.map((enterprise) => ({
-        ...enterprise,
-        color: getEnterpriseColor(enterprise.fkhname),
+    if (response.ok) {
+      const data = await response.json();
+      enterpriseData.value = data.map((enterprise: any) => ({
+        fkhname: enterprise.name,
+        totalSoldCabinets: enterprise.total_cabinets,
+        cabinetCount: enterprise.active_cabinets,
+        roomNames: enterprise.rooms,
+        khmanage: enterprise.manager,
+        color: enterprise.color,
       }));
     } else {
-      console.error("获取企业详细信息失败:", response.msg);
+      // 如果API失败，使用模拟数据
+      const mockResponse = await getEnterpriseRoomStatsByName(customerName.value);
+      if (mockResponse.success) {
+        enterpriseData.value = mockResponse.data.map((enterprise) => ({
+          ...enterprise,
+          color: getEnterpriseColor(enterprise.fkhname),
+        }));
+      }
     }
   } catch (error) {
     console.error("获取企业详细信息异常:", error);
+    // 发生错误时使用模拟数据
+    try {
+      const mockResponse = await getEnterpriseRoomStatsByName(customerName.value);
+      if (mockResponse.success) {
+        enterpriseData.value = mockResponse.data.map((enterprise: any) => ({
+          ...enterprise,
+          color: getEnterpriseColor(enterprise.fkhname),
+        }));
+      }
+    } catch (e) {
+      console.error("使用模拟数据也失败:", e);
+    }
   } finally {
     loading.value = false;
   }

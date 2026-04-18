@@ -429,54 +429,23 @@ const processCustomerRackData = (
   console.log(`开始处理数据，总条数: ${data.length}`);
   console.log(`当前机房ID: ${props.roomData.id}`);
 
-  // 过滤出当前机房的数据
-  const currentRoomData = data.filter((item) => {
-    if (!item.room_id) {
-      console.log(`数据项缺少 room_id`);
-      return false;
-    }
-
-    // 尝试多种匹配方式
-    const roomId = item.room_id.toString();
-    const targetRoomId = props.roomData.id.toString();
-
-    // 方式1: 完全匹配
-    const exactMatch = roomId === targetRoomId;
-
-    // 方式2: 前3位匹配
-    const prefixMatch = roomId.slice(0, 3) === targetRoomId;
-
-    // 方式3: 包含匹配
-    const containsMatch = roomId.includes(targetRoomId);
-
-    const roomIdMatch = exactMatch || prefixMatch || containsMatch;
-
+  // 处理数据 - 新的API返回直接是当前机房的数据
+  data.forEach((item, index) => {
+    const rackId = item.cabinet_id;
     console.log(
-      `数据项 room_id: ${roomId}, 目标机房: ${targetRoomId}, 完全匹配: ${exactMatch}, 前3位匹配: ${prefixMatch}, 包含匹配: ${containsMatch}, 最终匹配: ${roomIdMatch}`,
-    );
-    return roomIdMatch;
-  });
-
-  console.log("当前机房数据:", currentRoomData);
-  console.log(`过滤后的数据条数: ${currentRoomData.length}`);
-
-  // 更新机柜颜色
-  currentRoomData.forEach((item, index) => {
-    const rackId = parseInt(item.cabinet_id);
-    console.log(
-      `处理第 ${index + 1} 条数据: cabinet_id=${item.cabinet_id}, rackId=${rackId}, FENAME=${item.FENAME}`,
+      `处理第 ${index + 1} 条数据: cabinet_id=${item.cabinet_id}, rackId=${rackId}, enterprise=${item.enterprise}`,
     );
     console.log(
-      `更新机房 ${item.room_id} 的机柜 ${rackId}，分配给 ${item.FKHNAME}`,
+      `更新机房 ${props.roomData.id} 的机柜 ${rackId}，分配给 ${item.enterprise}`,
     );
-    if (!isNaN(rackId)) {
+    if (rackId) {
       rackController.updateSingleRackFromBackend(
         props.roomData.id,
         rackId,
-        item.FKHNAME,
-        item.FENAME,
+        item.enterprise || '',
+        item.enterprise || '',
         item.maintainer,
-        item.KHMANAGE,
+        item.manager,
         item.room_id,
       );
     } else {
@@ -487,7 +456,7 @@ const processCustomerRackData = (
   // 触发重新渲染
   updateTrigger.value++;
 
-  console.log(`处理了 ${currentRoomData.length} 条当前机房的客户机柜数据`);
+  console.log(`处理了 ${data.length} 条当前机房的客户机柜数据`);
 };
 
 // 接收后端数据的方法
@@ -495,7 +464,7 @@ const simulateDataReception = async () => {
   console.log(`正在获取机房 ${props.roomData.id} 的数据...`);
 
   try {
-    const response = await fetch(`/api/room/${props.roomData.id}/cabinets`);
+    const response = await fetch(`/api/room-layout/rooms/${props.roomData.id}/cabinets`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

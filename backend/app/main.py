@@ -1038,6 +1038,64 @@ def list_kb_links(db: Session = Depends(get_db)):
     return db.query(KnowledgeBaseLink).all()
 
 
+# ==================== Enterprise Stats API ====================
+
+@app.get("/api/config/enterprise-stats")
+def get_enterprise_stats(db: Session = Depends(get_db)):
+    """获取企业统计数据 - 从实际数据库统计"""
+    from sqlalchemy import func
+    
+    # 统计每个企业的机柜数量
+    results = db.query(
+        Enterprise.id,
+        Enterprise.name,
+        Enterprise.color,
+        Enterprise.manager,
+        func.count(Cabinet.id).label('total_cabinets')
+    ).join(
+        Cabinet, Cabinet.enterprise_id == Enterprise.id
+    ).group_by(
+        Enterprise.id, Enterprise.name, Enterprise.color, Enterprise.manager
+    ).all()
+    
+    # 获取每个企业的机房分布
+    enterprise_stats = []
+    for r in results:
+        # 查询该企业的所有机柜所在机房
+        cabinets = db.query(Cabinet).filter(Cabinet.enterprise_id == r.id).all()
+        room_ids = list(set([c.room_id for c in cabinets]))
+        room_names = [f"{rid}机房" for rid in sorted(room_ids)]
+        
+        # 计算已启用的机柜数量
+        active_count = sum(1 for c in cabinets if c.status == 'active')
+        
+        enterprise_stats.append({
+            "id": r.id,
+            "name": r.name,
+            "color": r.color or getEnterpriseColor(r.name),
+            "manager": r.manager or "待分配",
+            "total_cabinets": r.total_cabinets,
+            "active_cabinets": active_count,
+            "rooms": ", ".join(room_names) if room_names else "暂无机房",
+            "room_ids": room_ids
+        })
+    
+    # 按机柜数量降序排序
+    enterprise_stats.sort(key=lambda x: x["total_cabinets"], reverse=True)
+    
+    return enterprise_stats
+
+
+def getEnterpriseColor(enterprise_name: str) -> str:
+    """获取企业的颜色"""
+    colors = [
+        "#4a90e2", "#50c8a0", "#f5a623", "#e74c3c", "#9b59b6",
+        "#1abc9c", "#3498db", "#e67e22", "#2ecc71", "#e91e63"
+    ]
+    hash_code = sum(ord(c) for c in enterprise_name)
+    return colors[hash_code % len(colors)]
+
+
 @app.get("/api/environment/readings/{reading_id}", response_model=EnvironmentReadingResponse)
 def get_environment_reading(reading_id: int, db: Session = Depends(get_db)):
     reading = db.query(EnvironmentReading).filter(EnvironmentReading.id == reading_id).first()
