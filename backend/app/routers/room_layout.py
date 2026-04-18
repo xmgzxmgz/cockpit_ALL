@@ -9,7 +9,7 @@ import os
 import shutil
 from decimal import Decimal
 
-from app.room_layout_db import (
+from ..room_layout_db import (
     get_db,
     RoomLayoutConfig,
     CabinetConfig,
@@ -38,6 +38,8 @@ from app.room_layout_db import (
     create_backup_record,
     get_backup_records,
     get_latest_backup,
+    get_cabinet_statistics,
+    get_room_cabinet_statistics,
 )
 
 router = APIRouter(prefix="/api/room-layout", tags=["room-layout"])
@@ -386,7 +388,7 @@ def list_backups(limit: int = 10, db: Session = Depends(get_db)):
 @router.post("/backup/{backup_id}/restore", response_model=dict)
 def restore_backup(backup_id: int, db: Session = Depends(get_db)):
     """从备份恢复数据库"""
-    from app.room_layout_db import SessionLocal
+    from ..room_layout_db import SessionLocal
 
     record = db.query(DbBackupRecord).filter(DbBackupRecord.id == backup_id).first()
     if not record:
@@ -442,3 +444,21 @@ def get_latest_backup_endpoint(db: Session = Depends(get_db)):
     if not record:
         raise HTTPException(status_code=404, detail="没有找到备份记录")
     return record
+
+
+@router.get("/statistics/cabinets")
+def get_cabinet_statistics_endpoint(db: Session = Depends(get_db)):
+    """获取所有机柜的统计数据"""
+    statistics = get_cabinet_statistics(db)
+    return statistics
+
+
+@router.get("/rooms/{room_id}/statistics")
+def get_room_cabinet_statistics_endpoint(room_id: str, db: Session = Depends(get_db)):
+    """获取单个机房的机柜统计数据"""
+    room = get_room_by_id(db, room_id)
+    if not room:
+        raise HTTPException(status_code=404, detail=f"机房 {room_id} 不存在")
+    
+    statistics = get_room_cabinet_statistics(db, room_id)
+    return statistics

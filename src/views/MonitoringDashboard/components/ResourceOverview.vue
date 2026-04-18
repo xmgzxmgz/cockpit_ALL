@@ -63,7 +63,7 @@
         </div>
 
         <!-- 第二个概览卡片：应计收机柜 -->
-        <!-- <div class="overview-card billing">
+        <div class="overview-card billing">
           <div class="card-icon">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -77,10 +77,10 @@
               <span class="metric-value">{{ enterpriseRoomData.shouldBillCabinets || 0 }}</span>
             </div>
           </div>
-        </div> -->
+        </div>
 
         <!-- 第三个概览卡片：已计收机柜 -->
-        <!-- <div class="overview-card billed">
+        <div class="overview-card billed">
           <div class="card-icon">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -93,10 +93,10 @@
               <span class="metric-value">{{ enterpriseRoomData.billedCabinets || 0 }}</span>
             </div>
           </div>
-        </div> -->
+        </div>
 
         <!-- 第四个概览卡片：预占机柜 -->
-        <!-- <div class="overview-card reserved">
+        <div class="overview-card reserved">
           <div class="card-icon">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -110,10 +110,10 @@
               <span class="metric-value">{{ enterpriseRoomData.reservedCabinets || 0 }}</span>
             </div>
           </div>
-        </div> -->
+        </div>
 
         <!-- 第五个概览卡片：可销售机柜 -->
-        <!-- <div class="overview-card available">
+        <div class="overview-card available">
           <div class="card-icon">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -126,7 +126,7 @@
               <span class="metric-value">{{ enterpriseRoomData.availableCabinets || 0 }}</span>
             </div>
           </div>
-        </div> -->
+        </div>
 
         <!-- 第六个概览卡片：总上电机柜数 -->
         <div class="overview-card powered">
@@ -244,6 +244,60 @@
               <span class="metric-label">企业数</span>
               <span class="metric-value">{{
                 enterpriseRoomData.totalEnterpriseCount
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第十个概览卡片：客户使用机柜 -->
+        <div class="overview-card customer">
+          <div class="card-icon">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              ></path>
+            </svg>
+          </div>
+          <div class="card-content">
+            <div class="metric-row">
+              <span class="metric-label">客户使用机柜</span>
+              <span class="metric-value">{{
+                enterpriseRoomData.customerCabinets || 0
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第十一个概览卡片：自用机柜 -->
+        <div class="overview-card selfuse">
+          <div class="card-icon">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              ></path>
+            </svg>
+          </div>
+          <div class="card-content">
+            <div class="metric-row">
+              <span class="metric-label">自用机柜</span>
+              <span class="metric-value">{{
+                enterpriseRoomData.selfUseCabinets || 0
               }}</span>
             </div>
           </div>

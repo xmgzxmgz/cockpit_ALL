@@ -4,13 +4,13 @@
 
 -- 1. 企业表 (Enterprises)
 CREATE TABLE IF NOT EXISTS enterprises (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(255) NOT NULL, -- FKHNAME: 企业名称
     full_name VARCHAR(255),     -- FENAME: 企业全称
     maintainer VARCHAR(100),    -- 维护人员
     manager VARCHAR(100),       -- KHMANAGE: 客户经理
     color VARCHAR(50),          -- 企业颜色标识
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. 机房表 (Rooms)
@@ -22,17 +22,18 @@ CREATE TABLE IF NOT EXISTS rooms (
     rows INTEGER DEFAULT 22,    -- 3D场景行数
     max_racks INTEGER,          -- 最大机柜数
     status VARCHAR(50) DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_enabled BOOLEAN DEFAULT TRUE
 );
 
 -- 3. 机柜表 (Cabinets)
 CREATE TABLE IF NOT EXISTS cabinets (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id VARCHAR(50) REFERENCES rooms(id),
     enterprise_id INTEGER REFERENCES enterprises(id),
     cabinet_label VARCHAR(50) NOT NULL, -- 机柜编号
     status VARCHAR(50) DEFAULT 'active', -- 状态
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(room_id, cabinet_label)
 );
 
@@ -93,7 +94,7 @@ CREATE TABLE IF NOT EXISTS feature_categories (
 
 -- 5. 功能模块表 (Monitoring Features)
 CREATE TABLE IF NOT EXISTS monitoring_features (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     code VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -103,23 +104,23 @@ CREATE TABLE IF NOT EXISTS monitoring_features (
     severity VARCHAR(50) DEFAULT 'info',
     unit VARCHAR(50),
     latest_value VARCHAR(100),
-    config JSONB,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    config TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 6. 功能指标记录 (Feature Metrics)
 CREATE TABLE IF NOT EXISTS feature_metrics (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     feature_code VARCHAR(20) REFERENCES monitoring_features(code),
     metric_key VARCHAR(100),
     metric_value VARCHAR(100),
     unit VARCHAR(50),
-    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    collected_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 7. 告警规则表 (Alert Rules)
 CREATE TABLE IF NOT EXISTS alert_rules (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     feature_code VARCHAR(20) REFERENCES monitoring_features(code),
     rule_name VARCHAR(255),
     comparator VARCHAR(10),
@@ -131,79 +132,79 @@ CREATE TABLE IF NOT EXISTS alert_rules (
 
 -- 8. 告警事件表 (Alerts)
 CREATE TABLE IF NOT EXISTS alerts (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     feature_code VARCHAR(20) REFERENCES monitoring_features(code),
     rule_id INTEGER REFERENCES alert_rules(id),
     title VARCHAR(255),
     message TEXT,
     severity VARCHAR(50),
     status VARCHAR(50) DEFAULT 'active',
-    triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP
+    triggered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    resolved_at DATETIME
 );
 
 -- 9. 环境读数表 (Environment Readings)
 CREATE TABLE IF NOT EXISTS environment_readings (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id VARCHAR(50),
     sensor_type VARCHAR(50),
     value NUMERIC,
     unit VARCHAR(20),
-    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 10. 电力事件表 (Power Events)
 CREATE TABLE IF NOT EXISTS power_events (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id VARCHAR(50),
     event_type VARCHAR(100),
     severity VARCHAR(50),
     detail TEXT,
-    occurred_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 11. 服务器指标表 (Server Metrics)
 CREATE TABLE IF NOT EXISTS server_metrics (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     server_name VARCHAR(100),
     metric_key VARCHAR(100),
     metric_value VARCHAR(100),
     unit VARCHAR(20),
-    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 12. 网络指标表 (Network Metrics)
 CREATE TABLE IF NOT EXISTS network_metrics (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     link_name VARCHAR(100),
     metric_key VARCHAR(100),
     metric_value VARCHAR(100),
     unit VARCHAR(20),
-    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 13. 应用指标表 (Application Metrics)
 CREATE TABLE IF NOT EXISTS application_metrics (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     app_name VARCHAR(100),
     metric_key VARCHAR(100),
     metric_value VARCHAR(100),
     unit VARCHAR(20),
-    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 14. 安防事件表 (Security Events)
 CREATE TABLE IF NOT EXISTS security_events (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     event_type VARCHAR(100),
     severity VARCHAR(50),
     detail TEXT,
-    occurred_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 15. 值班排班表 (Oncall Schedules)
 CREATE TABLE IF NOT EXISTS oncall_schedules (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(100),
     duty_user VARCHAR(100),
     days VARCHAR(50),
@@ -213,7 +214,7 @@ CREATE TABLE IF NOT EXISTS oncall_schedules (
 
 -- 16. 巡检报告表 (Inspection Reports)
 CREATE TABLE IF NOT EXISTS inspection_reports (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     report_date DATE,
     summary TEXT,
     file_url VARCHAR(255)
@@ -221,16 +222,16 @@ CREATE TABLE IF NOT EXISTS inspection_reports (
 
 -- 17. 固件版本表 (Firmware Inventory)
 CREATE TABLE IF NOT EXISTS firmware_inventory (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     device_name VARCHAR(100),
     device_type VARCHAR(100),
     firmware_version VARCHAR(100),
-    last_checked TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    last_checked DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 18. 维保资产表 (Maintenance Assets)
 CREATE TABLE IF NOT EXISTS maintenance_assets (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     asset_name VARCHAR(100),
     asset_type VARCHAR(100),
     warranty_expiry DATE
@@ -238,7 +239,7 @@ CREATE TABLE IF NOT EXISTS maintenance_assets (
 
 -- 19. 知识库链接表 (Knowledge Base Links)
 CREATE TABLE IF NOT EXISTS knowledge_base_links (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     feature_code VARCHAR(20) REFERENCES monitoring_features(code),
     title VARCHAR(255),
     url VARCHAR(255)
@@ -246,16 +247,16 @@ CREATE TABLE IF NOT EXISTS knowledge_base_links (
 
 -- 20. 数据中心配置表 (Data Center Config)
 CREATE TABLE IF NOT EXISTS data_center_config (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(255) NOT NULL,
     floor_count INTEGER DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 21. 楼层配置表 (Floor Config)
 CREATE TABLE IF NOT EXISTS floor_config (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     data_center_id INTEGER REFERENCES data_center_config(id),
     floor_number INTEGER NOT NULL,
     floor_name VARCHAR(100),
@@ -263,13 +264,13 @@ CREATE TABLE IF NOT EXISTS floor_config (
     width FLOAT DEFAULT 100,
     depth FLOAT DEFAULT 100,
     room_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 22. 机房配置表 (Room Config)
 CREATE TABLE IF NOT EXISTS room_config (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     floor_id INTEGER REFERENCES floor_config(id),
     room_number INTEGER NOT NULL,
     room_name VARCHAR(100),
@@ -283,13 +284,14 @@ CREATE TABLE IF NOT EXISTS room_config (
     width FLOAT DEFAULT 50,
     depth FLOAT DEFAULT 50,
     height FLOAT DEFAULT 30,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    is_enabled BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 23. 机柜排列配置表 (Cabinet Layout)
 CREATE TABLE IF NOT EXISTS cabinet_layout (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id INTEGER REFERENCES room_config(id),
     layout_type VARCHAR(50) DEFAULT 'row',
     columns INTEGER DEFAULT 10,
@@ -297,25 +299,25 @@ CREATE TABLE IF NOT EXISTS cabinet_layout (
     spacing FLOAT DEFAULT 1.0,
     start_position_x FLOAT DEFAULT 0,
     start_position_y FLOAT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 24. 机柜网格表 (Cabinet Grid)
 CREATE TABLE IF NOT EXISTS cabinet_grid (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id INTEGER REFERENCES room_config(id),
     grid_x INTEGER NOT NULL,
     grid_y INTEGER NOT NULL,
     is_occupied BOOLEAN DEFAULT FALSE,
     cabinet_id INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 25. 资源概览表 (Resource Overview)
 CREATE TABLE IF NOT EXISTS resource_overview (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     total_servers INTEGER DEFAULT 0,
     total_it_cabinet_count INTEGER DEFAULT 0,
     total_enterprise_count INTEGER DEFAULT 0,
@@ -325,8 +327,8 @@ CREATE TABLE IF NOT EXISTS resource_overview (
     available_cabinets INTEGER DEFAULT 0,
     customer_cabinets INTEGER DEFAULT 0,
     self_use_cabinets INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 插入数据中心配置初始数据
@@ -517,65 +519,65 @@ ON CONFLICT DO NOTHING;
 
 -- 6. 功能指标记录 (Feature Metrics) - 为图表提供数据
 INSERT INTO feature_metrics (feature_code, metric_key, metric_value, unit, collected_at) VALUES
-('1.01', 'temperature', '24.5', '°C', NOW() - INTERVAL '1 hour'),
-('1.01', 'temperature', '25.1', '°C', NOW() - INTERVAL '30 minutes'),
-('1.01', 'temperature', '23.8', '°C', NOW()),
-('1.01', 'humidity', '45', '%', NOW() - INTERVAL '1 hour'),
-('1.01', 'humidity', '48', '%', NOW()),
+('1.01', 'temperature', '24.5', '°C', DATETIME('now', '-1 hour')),
+('1.01', 'temperature', '25.1', '°C', DATETIME('now', '-30 minutes')),
+('1.01', 'temperature', '23.8', '°C', DATETIME('now')),
+('1.01', 'humidity', '45', '%', DATETIME('now', '-1 hour')),
+('1.01', 'humidity', '48', '%', DATETIME('now')),
 
-('2.01', 'pue', '1.45', '', NOW() - INTERVAL '4 hour'),
-('2.01', 'pue', '1.42', '', NOW() - INTERVAL '3 hour'),
-('2.01', 'pue', '1.39', '', NOW() - INTERVAL '2 hour'),
-('2.01', 'pue', '1.38', '', NOW() - INTERVAL '1 hour'),
-('2.01', 'pue', '1.35', '', NOW()),
+('2.01', 'pue', '1.45', '', DATETIME('now', '-4 hour')),
+('2.01', 'pue', '1.42', '', DATETIME('now', '-3 hour')),
+('2.01', 'pue', '1.39', '', DATETIME('now', '-2 hour')),
+('2.01', 'pue', '1.38', '', DATETIME('now', '-1 hour')),
+('2.01', 'pue', '1.35', '', DATETIME('now')),
 
-('3.01', 'cpu_temp', '55', '°C', NOW() - INTERVAL '2 hour'),
-('3.01', 'cpu_temp', '62', '°C', NOW() - INTERVAL '1 hour'),
-('3.01', 'cpu_temp', '58', '°C', NOW()),
+('3.01', 'cpu_temp', '55', '°C', DATETIME('now', '-2 hour')),
+('3.01', 'cpu_temp', '62', '°C', DATETIME('now', '-1 hour')),
+('3.01', 'cpu_temp', '58', '°C', DATETIME('now')),
 
-('4.01', 'traffic_in', '450', 'Mbps', NOW() - INTERVAL '1 hour'),
-('4.01', 'traffic_in', '890', 'Mbps', NOW()),
-('4.01', 'traffic_out', '320', 'Mbps', NOW() - INTERVAL '1 hour'),
-('4.01', 'traffic_out', '650', 'Mbps', NOW());
+('4.01', 'traffic_in', '450', 'Mbps', DATETIME('now', '-1 hour')),
+('4.01', 'traffic_in', '890', 'Mbps', DATETIME('now')),
+('4.01', 'traffic_out', '320', 'Mbps', DATETIME('now', '-1 hour')),
+('4.01', 'traffic_out', '650', 'Mbps', DATETIME('now'));
 
 -- 9. 环境读数 (Environment Readings)
 INSERT INTO environment_readings (room_id, sensor_type, value, unit, recorded_at) VALUES
-('201', 'temperature', 23.5, '°C', NOW()),
-('201', 'humidity', 45.0, '%', NOW()),
-('202', 'temperature', 22.8, '°C', NOW()),
-('202', 'humidity', 42.5, '%', NOW()),
-('203', 'temperature', 24.1, '°C', NOW()),
-('203', 'humidity', 48.2, '%', NOW());
+('201', 'temperature', 23.5, '°C', DATETIME('now')),
+('201', 'humidity', 45.0, '%', DATETIME('now')),
+('202', 'temperature', 22.8, '°C', DATETIME('now')),
+('202', 'humidity', 42.5, '%', DATETIME('now')),
+('203', 'temperature', 24.1, '°C', DATETIME('now')),
+('203', 'humidity', 48.2, '%', DATETIME('now'));
 
 -- 10. 电力事件 (Power Events)
 INSERT INTO power_events (room_id, event_type, severity, detail, occurred_at) VALUES
-('201', 'voltage_sag', 'warning', '监测到短暂电压暂降', NOW() - INTERVAL '2 days'),
-('203', 'ups_switch', 'info', 'UPS例行自检切换', NOW() - INTERVAL '5 days');
+('201', 'voltage_sag', 'warning', '监测到短暂电压暂降', DATETIME('now', '-2 days')),
+('203', 'ups_switch', 'info', 'UPS例行自检切换', DATETIME('now', '-5 days'));
 
 -- 11. 服务器指标 (Server Metrics)
 INSERT INTO server_metrics (server_name, metric_key, metric_value, unit, recorded_at) VALUES
-('SRV-A01-01', 'cpu_usage', '45', '%', NOW()),
-('SRV-A01-01', 'memory_usage', '62', '%', NOW()),
-('SRV-A01-01', 'disk_usage', '78', '%', NOW()),
-('SRV-B02-05', 'cpu_usage', '89', '%', NOW()), -- High load
-('SRV-B02-05', 'memory_usage', '91', '%', NOW());
+('SRV-A01-01', 'cpu_usage', '45', '%', DATETIME('now')),
+('SRV-A01-01', 'memory_usage', '62', '%', DATETIME('now')),
+('SRV-A01-01', 'disk_usage', '78', '%', DATETIME('now')),
+('SRV-B02-05', 'cpu_usage', '89', '%', DATETIME('now')), -- High load
+('SRV-B02-05', 'memory_usage', '91', '%', DATETIME('now'));
 
 -- 12. 网络指标 (Network Metrics)
 INSERT INTO network_metrics (link_name, metric_key, metric_value, unit, recorded_at) VALUES
-('Core-Switch-A', 'throughput', '8.5', 'Gbps', NOW()),
-('Core-Switch-A', 'latency', '2', 'ms', NOW()),
-('Edge-Router-1', 'packet_loss', '0.01', '%', NOW());
+('Core-Switch-A', 'throughput', '8.5', 'Gbps', DATETIME('now')),
+('Core-Switch-A', 'latency', '2', 'ms', DATETIME('now')),
+('Edge-Router-1', 'packet_loss', '0.01', '%', DATETIME('now'));
 
 -- 13. 应用指标 (Application Metrics)
 INSERT INTO application_metrics (app_name, metric_key, metric_value, unit, recorded_at) VALUES
-('Billing-Service', 'response_time', '120', 'ms', NOW()),
-('Auth-Service', 'response_time', '45', 'ms', NOW()),
-('Data-Pipeline', 'queue_depth', '5400', 'msg', NOW());
+('Billing-Service', 'response_time', '120', 'ms', DATETIME('now')),
+('Auth-Service', 'response_time', '45', 'ms', DATETIME('now')),
+('Data-Pipeline', 'queue_depth', '5400', 'msg', DATETIME('now'));
 
 -- 14. 安防事件 (Security Events)
 INSERT INTO security_events (event_type, severity, detail, occurred_at) VALUES
-('unauthorized_access', 'critical', '门禁系统检测到未授权卡片尝试进入204机房', NOW() - INTERVAL '1 hour'),
-('video_motion', 'info', '201机房G区检测到人员移动', NOW() - INTERVAL '15 minutes');
+('unauthorized_access', 'critical', '门禁系统检测到未授权卡片尝试进入204机房', DATETIME('now', '-1 hour')),
+('video_motion', 'info', '201机房G区检测到人员移动', DATETIME('now', '-15 minutes'));
 
 -- 15. 值班排班 (Oncall Schedules)
 INSERT INTO oncall_schedules (name, duty_user, days, start_time, end_time) VALUES
@@ -586,14 +588,14 @@ INSERT INTO oncall_schedules (name, duty_user, days, start_time, end_time) VALUE
 
 -- 16. 巡检报告 (Inspection Reports)
 INSERT INTO inspection_reports (report_date, summary, file_url) VALUES
-(NOW() - INTERVAL '1 day', '2023年10月23日例行巡检，发现202机房空调异响，已报修。', '/reports/20231023.pdf'),
-(NOW() - INTERVAL '7 days', '周度巡检报告，所有设备运行正常。', '/reports/20231016.pdf');
+(DATETIME('now', '-1 day'), '2023年10月23日例行巡检，发现202机房空调异响，已报修。', '/reports/20231023.pdf'),
+(DATETIME('now', '-7 days'), '周度巡检报告，所有设备运行正常。', '/reports/20231016.pdf');
 
 -- 17. 固件版本 (Firmware Inventory)
 INSERT INTO firmware_inventory (device_name, device_type, firmware_version, last_checked) VALUES
-('Core-Switch-01', 'Switch', 'v12.4.3', NOW()),
-('UPS-Main-A', 'UPS', 'v2.1.0', NOW()),
-('PDU-201-A01', 'PDU', 'v1.5.2', NOW());
+('Core-Switch-01', 'Switch', 'v12.4.3', DATETIME('now')),
+('UPS-Main-A', 'UPS', 'v2.1.0', DATETIME('now')),
+('PDU-201-A01', 'PDU', 'v1.5.2', DATETIME('now'));
 
 -- 18. 维保资产 (Maintenance Assets)
 INSERT INTO maintenance_assets (asset_name, asset_type, warranty_expiry) VALUES

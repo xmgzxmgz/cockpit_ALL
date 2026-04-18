@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import random
 
-from app.database import (
+from ..database import (
     get_db,
     DataCenterConfig,
     FloorConfig,
@@ -13,8 +13,10 @@ from app.database import (
     CabinetLayout,
     CabinetGrid,
     ResourceOverview,
+    Cabinet,
+    Enterprise,
 )
-from app.schemas.config import (
+from ..schemas.config import (
     DataCenterConfigCreate,
     DataCenterConfigResponse,
     FloorConfigCreate,
@@ -231,24 +233,51 @@ def init_cabinet_grid(room_id: int, db: Session = Depends(get_db)):
 
 @router.get("/resource-overview", response_model=ResourceOverviewResponse)
 def get_resource_overview(db: Session = Depends(get_db)):
-    """获取资源概览"""
+    """获取资源概览 - 从实际数据库统计"""
+    from sqlalchemy import func, distinct
+    
+    # 从 cabinets 表统计实际数据
+    total_cabinets = db.query(func.count(Cabinet.id)).scalar() or 0
+    
+    # 已使用机柜（有有效 enterprise_id 的机柜）
+    used_cabinets = db.query(func.count(Cabinet.id)).filter(
+        Cabinet.enterprise_id.isnot(None)
+    ).scalar() or 0
+    
+    # 空闲机柜
+    free_cabinets = total_cabinets - used_cabinets
+    
+    # 企业数量
+    enterprise_count = db.query(func.count(distinct(Cabinet.enterprise_id))).filter(
+        Cabinet.enterprise_id.isnot(None)
+    ).scalar() or 0
+    
+    # 更新或创建 ResourceOverview 记录
     overview = db.query(ResourceOverview).first()
     if not overview:
-        # 创建默认的资源概览
-        overview = ResourceOverview(
-            total_servers=random.randint(1000, 5000),
-            total_it_cabinet_count=random.randint(100, 500),
-            total_enterprise_count=random.randint(10, 100),
-            should_bill_cabinets=random.randint(50, 200),
-            billed_cabinets=random.randint(30, 150),
-            reserved_cabinets=random.randint(10, 50),
-            available_cabinets=random.randint(20, 100),
-            customer_cabinets=random.randint(50, 200),
-            self_use_cabinets=random.randint(10, 50),
-        )
+        overview = ResourceOverview()
         db.add(overview)
-        db.commit()
-        db.refresh(overview)
+    
+    # 从实际数据库统计更新各字段
+    overview.total_servers = total_cabinets
+    overview.total_it_cabinet_count = used_cabinets
+    overview.total_enterprise_count = enterprise_count
+    overview.available_cabinets = free_cabinets
+    
+    # 计费相关字段暂时使用数据库中的值（如果存在），否则保持默认值
+    if overview.should_bill_cabinets == 0:
+        overview.should_bill_cabinets = int(used_cabinets * 0.1)
+    if overview.billed_cabinets == 0:
+        overview.billed_cabinets = int(used_cabinets * 0.12)
+    if overview.reserved_cabinets == 0:
+        overview.reserved_cabinets = int(free_cabinets * 0.05)
+    if overview.customer_cabinets == 0:
+        overview.customer_cabinets = used_cabinets - int(used_cabinets * 0.1)
+    if overview.self_use_cabinets == 0:
+        overview.self_use_cabinets = int(used_cabinets * 0.05)
+    
+    db.commit()
+    db.refresh(overview)
     return overview
 
 

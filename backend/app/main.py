@@ -718,16 +718,17 @@ def get_overview_stats(db: Session = Depends(get_db)):
 
 
 @app.get("/api/stats/enterprises", response_model=List[EnterpriseStat])
-def get_enterprise_stats(db: Session = Depends(get_db)):
+def get_enterprise_stats(room_id: Optional[str] = None, db: Session = Depends(get_db)):
     """
     获取企业机柜统计数据。
     """
-    stats = (
-        db.query(Enterprise.name, func.count(Cabinet.id).label("count"))
-        .join(Cabinet)
-        .group_by(Enterprise.name)
-        .all()
-    )
+    query = db.query(Enterprise.name, func.count(Cabinet.id).label("count"))
+    query = query.join(Cabinet)
+    
+    if room_id:
+        query = query.filter(Cabinet.room_id == room_id)
+    
+    stats = query.group_by(Enterprise.name).all()
     return [{"fkhname": name, "cabinetCount": count} for name, count in stats]
 
 

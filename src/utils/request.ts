@@ -11,7 +11,7 @@ interface ApiResponse<T = any> {
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8009",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8002",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -40,29 +40,9 @@ request.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     console.log("收到响应:", response);
 
-    // 兼容后端直接返回数据的情况（如数组或不包含标准包装的对象）
-    // 如果是数组，或者是对象但没有 success/code 字段，且状态码是 2xx，则直接返回
-    if (
-      Array.isArray(response.data) ||
-      (response.data &&
-        typeof response.data === "object" &&
-        !("success" in response.data) &&
-        !("code" in response.data))
-    ) {
-      return response;
-    }
-
-    const { success, code, msg } = response.data;
-
-    // 优先根据success判断请求是否成功
-    if (success) {
-      // 可以根据需要添加对特定code的处理
-      return response;
-    } else {
-      // 处理业务失败的情况
-      console.error(`业务错误: [${code}] ${msg}`);
-      return Promise.reject(new Error(msg || "请求失败"));
-    }
+    // 直接返回响应，不做任何处理
+    // 这样可以确保后端返回的数据能够被前端正确处理
+    return response;
   },
   (error) => {
     console.error("响应错误:", error);

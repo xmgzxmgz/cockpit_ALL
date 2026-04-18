@@ -52,27 +52,19 @@
         <div class="rack-stats">
           <div class="rack-stat-item">
             <span class="stat-label">总机柜数</span>
-            <span class="stat-value">{{ totalRacks }}</span>
+            <span class="stat-value">{{ roomStatsData.totalCabinets }}</span>
           </div>
           <div class="rack-stat-item">
             <span class="stat-label">已使用</span>
-            <span class="stat-value used">{{ usedRacks || 0 }}</span>
+            <span class="stat-value used">{{ roomStatsData.usedCabinets }}</span>
           </div>
           <div class="rack-stat-item">
             <span class="stat-label">空闲</span>
-            <span class="stat-value available">{{
-              totalRacks - (usedRacks || 0)
-            }}</span>
+            <span class="stat-value available">{{ roomStatsData.freeCabinets }}</span>
           </div>
           <div class="rack-stat-item">
             <span class="stat-label">使用率</span>
-            <span class="stat-value usage">
-              {{
-                totalRacks > 0
-                  ? (((usedRacks || 0) / totalRacks) * 100).toFixed(1)
-                  : "0.0"
-              }}%
-            </span>
+            <span class="stat-value usage">{{ roomStatsData.usageRate }}%</span>
           </div>
         </div>
 
@@ -332,6 +324,8 @@ import {
   type FeatureCategory,
 } from "@/api/monitoring";
 
+import { roomLayoutApi } from "@/api/roomLayout";
+
 // 本地定义企业统计数据接口
 interface EnterpriseRoomStatsData {
   fkhname: string;
@@ -372,10 +366,17 @@ defineEmits<{
 }>();
 
 // 计算机房的实际机柜总数
-const totalRacks = computed(() => {
-  return getRoomTotalRacks(props.roomData.id);
+const totalRacks = ref(0);
+
+// 计算机房的统计数据
+const roomStatsData = ref({
+  totalCabinets: 0,
+  usedCabinets: 0,
+  freeCabinets: 0,
+  usageRate: 0
 });
 
+// 在组件挂载时调用函数
 // 计算企业统计信息（按数量降序排序）
 const enterpriseStats = computed(() => {
   if (!roomStats.value || roomStats.value.length === 0) {
@@ -392,9 +393,24 @@ const enterpriseStats = computed(() => {
     .sort((a, b) => b.count - a.count);
 });
 
-// 判断是否需要滚动（企业数量超过6个）
+// 在组件挂载时获取数据
+onMounted(async () => {
+  await fetchEnterpriseRoomStats();
+  await fetchRoomStatistics();
+  await fetchCategories();
+  await fetchFeatures();
+  await fetchAlerts();
+});
+
+// 监听 roomData 变化，重新获取数据
+watch(() => props.roomData, async () => {
+  await fetchEnterpriseRoomStats();
+  await fetchRoomStatistics();
+}, { deep: true });
+
+// 判断是否需要滚动（企业数量超过12个）
 const shouldEnableScroll = computed(() => {
-  return enterpriseStats.value.length > 6;
+  return enterpriseStats.value.length > 12;
 });
 
 // 用于存储从API获取的企业统计数据
@@ -426,8 +442,8 @@ const filteredFeatures = computed(() => {
 // 获取功能分类
 const fetchCategories = async () => {
   try {
-    const data = await getFeatureCategories();
-    categories.value = data;
+    const response = await getFeatureCategories();
+    categories.value = response.data || response;
   } catch (error) {
     console.error("获取功能分类失败:", error);
   }
@@ -460,8 +476,8 @@ const toggleFeature = async (code: string) => {
       getFeatureMetrics(code),
       getAlerts(),
     ]);
-    activeMetrics.value = metricsRes;
-    activeFeatureAlerts.value = alertsRes.filter(
+    activeMetrics.value = metricsRes.data || metricsRes;
+    activeFeatureAlerts.value = (alertsRes.data || alertsRes).filter(
       (a: any) => a.feature_code === code,
     );
   } catch (e) {
@@ -484,7 +500,7 @@ const submitMetric = async (feature: any) => {
     featureActionStatus.value[feature.code] = "成功";
     // 刷新指标
     const metricsRes = await getFeatureMetrics(feature.code);
-    activeMetrics.value = metricsRes;
+    activeMetrics.value = metricsRes.data || metricsRes;
     // 刷新列表以更新最新值
     await fetchFeatures();
   } catch (e) {
@@ -549,11 +565,25 @@ const submitAlert = async (feature: any) => {
 // 获取企业统计数据
 const fetchEnterpriseRoomStats = async () => {
   try {
-    // 使用 fetch 调用 API
-    const response = await fetch("/api/stats/enterprises");
-    if (!response.ok) throw new Error("Network response was not ok");
-
-    const data: EnterpriseRoomStatsData[] = await response.json();
+    const cabinets = await roomLayoutApi.getRoomCabinets(props.roomData.id, false);
+    
+    // 计算企业统计数据
+    const enterpriseCounts: Record<string, number> = {};
+    cabinets.forEach((cabinet: any) => {
+      if (cabinet.enterprise && cabinet.enterprise !== "未启用") {
+        if (enterpriseCounts[cabinet.enterprise]) {
+          enterpriseCounts[cabinet.enterprise]++;
+        } else {
+          enterpriseCounts[cabinet.enterprise] = 1;
+        }
+      }
+    });
+    
+    // 转换为数组格式
+    const data: EnterpriseRoomStatsData[] = Object.entries(enterpriseCounts).map(([name, count]) => ({
+      fkhname: name,
+      cabinetCount: count
+    }));
 
     roomStats.value = data;
     usedRacks.value = 0;
@@ -565,11 +595,22 @@ const fetchEnterpriseRoomStats = async () => {
   }
 };
 
+// 获取机房统计数据
+const fetchRoomStatistics = async () => {
+  try {
+    const data = await roomLayoutApi.getRoomCabinetStatistics(props.roomData.id);
+    roomStatsData.value = data;
+    totalRacks.value = data.totalCabinets;
+  } catch (error) {
+    console.error("获取机房统计数据失败:", error);
+  }
+};
+
 const fetchFeatures = async () => {
   try {
     featureError.value = "";
-    const data = await getMonitoringFeatures();
-    features.value = data;
+    const response = await getMonitoringFeatures();
+    features.value = response.data || response;
   } catch (error) {
     console.error("获取功能模块失败:", error);
     featureError.value = "功能模块加载失败";
@@ -580,8 +621,8 @@ const fetchFeatures = async () => {
 const fetchAlerts = async () => {
   try {
     alertError.value = "";
-    const data = await getAlerts();
-    alerts.value = data;
+    const response = await getAlerts();
+    alerts.value = response.data || response;
   } catch (error) {
     console.error("获取告警列表失败:", error);
     alertError.value = "告警列表加载失败";
@@ -648,6 +689,7 @@ const getStatusLabel = (status: string) => {
 // 在组件挂载时获取统计数据
 onMounted(() => {
   fetchEnterpriseRoomStats();
+  fetchRoomStatistics();
   fetchCategories();
   fetchFeatures();
   fetchAlerts();
@@ -658,6 +700,7 @@ watch(
   (newRoomId, oldRoomId) => {
     if (newRoomId !== oldRoomId) {
       fetchEnterpriseRoomStats();
+      fetchRoomStatistics();
       fetchFeatures();
       fetchAlerts();
     }
@@ -668,6 +711,44 @@ watch(
 <style scoped>
 @import "@/styles/panels.css";
 
+/* 调整面板内部容器宽度 */
+.room-detail-panel {
+  position: fixed;
+  top: 50%;
+  right: 0px;
+  transform: translateY(-50%);
+  width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 9999990;
+}
+
+/* 确保面板内容宽度匹配 */
+.room-info {
+  position: relative;
+  z-index: 1;
+  padding: 0 15px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* 修复遮罩问题，确保遮罩覆盖整个面板 */
+.panel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 26px;
+  pointer-events: none;
+  opacity: 0.5;
+  z-index: 0;
+  overflow: visible;
+}
+
 /* 机柜信息样式 */
 .rack-section {
   margin-top: 20px;
@@ -675,19 +756,23 @@ watch(
 
 .rack-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 15px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .rack-stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 8px 10px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .stat-label {
@@ -718,12 +803,12 @@ watch(
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: rgba(255, 255, 255, 0.014);
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  margin-bottom: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  margin-bottom: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .room-id .label {
@@ -739,42 +824,57 @@ watch(
 
 /* 企业图注样式  */
 .enterprise-legend-section {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .enterprise-legend {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   /* 默认不设置最大高度和滚动 */
   overflow-x: hidden;
   width: 100%;
 }
 
-/* 当企业数量超过6个时启用滚动 */
+/* 当企业数量超过12个时启用滚动 */
 .enterprise-legend.scrollable {
-  max-height: 192px; /* 调整高度以显示6个企业项目 (6 * 32px) */
+  max-height: 300px; /* 调整高度以显示12个企业项目 (12 * 25px) */
   overflow-y: auto;
+}
+
+/* 图例项样式 */
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+  /* 确保项目不会超出容器宽度 */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* 滚动条样式 */
 .enterprise-legend::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .enterprise-legend::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 3px;
+  background: transparent;
+  border-radius: 2px;
 }
 
 .enterprise-legend::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
   transition: background 0.2s ease;
 }
 
 .enterprise-legend::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .legend-item {
@@ -861,23 +961,35 @@ watch(
 
 .feature-section,
 .alert-section {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .feature-item {
-  padding: 10px;
-  border-radius: 10px;
+  padding: 6px;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 100px;
+}
+
+.feature-item:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .feature-item.warning {
@@ -933,7 +1045,10 @@ watch(
 .alert-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .alert-item {
@@ -944,6 +1059,53 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.alert-item:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateX(4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* 告警列表滚动条样式 */
+.alert-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.alert-list::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
+}
+
+.alert-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.alert-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* 面板滚动条样式 */
+.room-detail-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.room-detail-panel::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
+}
+
+.room-detail-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.room-detail-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .alert-item.warning {

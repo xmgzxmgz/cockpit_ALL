@@ -183,5 +183,13 @@ export const roomLayoutApi = {
 
   getLatestBackup(): Promise<BackupResponse> {
     return request.get('/api/room-layout/backup/latest').then(res => res.data)
+  },
+
+  getCabinetStatistics(): Promise<any> {
+    return request.get('/api/room-layout/statistics/cabinets').then(res => res.data)
+  },
+
+  getRoomCabinetStatistics(roomId: string): Promise<any> {
+    return request.get(`/api/room-layout/rooms/${roomId}/statistics`).then(res => res.data)
   }
 }

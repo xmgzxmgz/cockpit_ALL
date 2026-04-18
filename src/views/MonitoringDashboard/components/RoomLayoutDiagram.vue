@@ -278,7 +278,20 @@ watchEffect(async () => {
   if (import.meta.env.DEV) {
     console.log(`正在从数据库刷新机房 ${props.roomData.id} 数据...`);
   }
-  await initializeRoom(props.roomData.id);
+  
+  try {
+    // 强制从数据库刷新机房数据
+    await import('@/utils/roomLayoutService').then(({ refreshRoom }) => refreshRoom(props.roomData.id))
+    console.log(`强制从数据库刷新机房 ${props.roomData.id} 数据成功`)
+    
+    // 初始化机房
+    await initializeRoom(props.roomData.id);
+    
+    // 触发重新渲染
+    updateTrigger.value++
+  } catch (error) {
+    console.error('刷新数据库数据失败:', error)
+  }
 
   // 检查是否有传入的布局命令，如果有则执行
   if (
@@ -298,7 +311,10 @@ onMounted(async () => {
   } catch (error) {
     console.error('刷新数据库数据失败:', error)
   }
-  simulateDataReception()
+  
+  // 触发重新渲染
+  updateTrigger.value++
+  
   // 添加全局点击事件监听器
   document.addEventListener("click", handleClickOutside)
 });
@@ -319,17 +335,16 @@ const rackLayout = computed(() => {
   updateTrigger.value;
   const layout = rackController.getRoomLayoutWithPlaceholders(
     props.roomData.id,
-    true,
+    false, // 显示所有机柜，不管是否分配了企业
   );
   return layout;
 });
 
 // 获取区域框架配置
 const areaFrames = computed(() => {
-  const roomConfig = roomConfigs.find(
-    (config) => config.roomId === props.roomData.id,
-  );
-  return roomConfig?.areaFrames || [];
+  // 从数据库获取区域框架配置
+  // 暂时返回空数组，因为我们已经删除了所有区域框架
+  return []
 });
 
 // 将机柜范围字符串转换为网格坐标

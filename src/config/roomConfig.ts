@@ -541,21 +541,12 @@ export function getHoverAnimationConfig() {
  * @returns 网格配置信息
  */
 export function getRoomGridConfig(roomId: string): RoomGridConfig {
-  // 查找特定机房的配置
-  const specificConfig = roomGridConfigs.find((config) => config.roomId === roomId)
-  if (specificConfig) {
-    return specificConfig
-  }
-
-  // 返回默认配置
-  const defaultConfig = roomGridConfigs.find((config) => config.roomId === 'default')
-  if (!defaultConfig) {
-    throw new Error('未找到默认机房网格配置')
-  }
-
+  // 所有机房都使用30x20的配置
   return {
-    ...defaultConfig,
-    roomId, // 使用实际的机房ID
+    roomId,
+    cols: 30,
+    rows: 20,
+    maxRacks: 600
   }
 }
 

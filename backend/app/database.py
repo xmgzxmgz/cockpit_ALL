@@ -17,7 +17,7 @@ import os
 
 import pathlib
 
-_DEFAULT_DB = f"sqlite:///{pathlib.Path(__file__).resolve().parents[3] / 'cockpit.db'}"
+_DEFAULT_DB = f"sqlite:///{pathlib.Path(__file__).resolve().parents[2] / 'cockpit.db'}"
 DATABASE_URL = os.getenv("DATABASE_URL", _DEFAULT_DB)
 
 # SQLite 需要额外参数避免多线程错误。PostgreSQL 则直接连接。

@@ -45,15 +45,13 @@ class RoomLayoutService {
   }
 
   private updateRackFromDB(roomId: string, cabinet: CabinetConfigResponse): void {
-    const layout = rackController['roomLayouts'].get(roomId)
-    if (!layout) return
-
-    // 确保机柜存在，如果不存在则创建
-    let rack = layout.racks.get(cabinet.cabinet_id)
-    if (!rack) {
-      // 创建新的机柜配置
-      rack = {
-        id: cabinet.cabinet_id,
+    // 直接更新机柜属性
+    const layout = rackController.getRoomLayout(roomId)
+    const existingRack = layout.find(r => r.id === cabinet.cabinet_id)
+    
+    if (existingRack) {
+      // 更新现有机柜
+      Object.assign(existingRack, {
         enabled: cabinet.enabled,
         enterprise: cabinet.enterprise,
         color: cabinet.color || (cabinet.enterprise ? getEnterpriseColor(cabinet.enterprise) : '#f8fafc'),
@@ -67,27 +65,10 @@ class RoomLayoutService {
           row: cabinet.row_position,
           col: cabinet.col_position
         }
-      }
+      })
     } else {
-      // 更新现有机柜
-      rack = {
-        ...rack,
-        enabled: cabinet.enabled,
-        enterprise: cabinet.enterprise,
-        color: cabinet.color || (cabinet.enterprise ? getEnterpriseColor(cabinet.enterprise) : '#f8fafc'),
-        isHidden: cabinet.is_hidden,
-        visibleIndex: cabinet.visible_index || cabinet.cabinet_id,
-        name: cabinet.name,
-        maintainer: cabinet.maintainer,
-        KHMANAGE: cabinet.manager,
-        position: {
-          row: cabinet.row_position,
-          col: cabinet.col_position
-        }
-      }
+      console.warn(`机柜 ${cabinet.cabinet_id} 不存在，跳过更新`)
     }
-
-    layout.racks.set(cabinet.cabinet_id, rack)
   }
 
   async refreshRoomFromDB(roomId: string): Promise<void> {
@@ -209,6 +190,36 @@ class RoomLayoutService {
     } catch (error) {
       console.error(`更新机房 ${roomId} 设置失败:`, error)
       return false
+    }
+  }
+
+  async getCabinetStatistics(): Promise<any> {
+    try {
+      return await roomLayoutApi.getCabinetStatistics()
+    } catch (error) {
+      console.error('获取机柜统计数据失败:', error)
+      return {
+        totalCabinets: 0,
+        shouldBillCabinets: 0,
+        billedCabinets: 0,
+        reservedCabinets: 0,
+        enterpriseCabinets: 0,
+        selfUseCabinets: 0
+      }
+    }
+  }
+
+  async getRoomCabinetStatistics(roomId: string): Promise<any> {
+    try {
+      return await roomLayoutApi.getRoomCabinetStatistics(roomId)
+    } catch (error) {
+      console.error(`获取机房 ${roomId} 统计数据失败:`, error)
+      return {
+        totalCabinets: 0,
+        usedCabinets: 0,
+        freeCabinets: 0,
+        usageRate: 0
+      }
     }
   }
 }

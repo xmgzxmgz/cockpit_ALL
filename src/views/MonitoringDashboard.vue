@@ -45,7 +45,7 @@
 import { ref, onMounted, computed, nextTick } from "vue";
 import { useDashboardStore } from "@/stores/dashboard";
 import type { RoomData } from "@/stores/dashboard";
-import { roomConfigs } from "@/config/roomConfig";
+import { roomLayoutApi } from "@/api/roomLayout";
 import ThreeScene from "./MonitoringDashboard/components/ThreeScene.vue";
 import LogoPanel from "./MonitoringDashboard/components/LogoPanel.vue";
 import TimePanel from "./MonitoringDashboard/components/TimePanel.vue";
@@ -107,71 +107,57 @@ const handleEnterpriseePanelClose = () => {
   // 企业面板现在由自身的isCollapsed状态控制，这里可以为空或添加其他逻辑
 };
 
-const handleRoomTagClick = (roomId: string) => {
+const handleRoomTagClick = async (roomId: string) => {
   console.log("Room tag clicked:", roomId);
 
   // 先清除当前选择，确保重新选择同一个房间时也能触发更新
   dashboardStore.setSelectedRoom(null);
 
-  // 使用nextTick确保DOM更新后再设置新的房间
-  nextTick(() => {
-    // 从配置文件中查找对应的机房配置
-    const roomConfig = roomConfigs.find((config) => config.roomId === roomId);
-
+  try {
+    // 从数据库获取机房信息
+    const roomInfo = await roomLayoutApi.getRoom(roomId);
+    const cabinets = await roomLayoutApi.getRoomCabinets(roomId, false);
+    
     // 生成机柜布局数据
-    const rackLayout: any[] = [];
-    if (roomConfig) {
-      roomConfig.assignments.forEach((assignment) => {
-        // 解析机柜范围字符串，生成机柜数据
-        const ranges = assignment.rackRange.split(",");
-        ranges.forEach((range) => {
-          const trimmedRange = range.trim();
-          if (trimmedRange.includes("-")) {
-            const [start, end] = trimmedRange
-              .split("-")
-              .map((num) => parseInt(num));
-            for (let i = start; i <= end; i++) {
-              rackLayout.push({
-                id: i,
-                enterprise: assignment.enterprise,
-                enabled: assignment.enabled,
-                color: assignment.color || roomConfig.defaultColor,
-              });
-            }
-          } else {
-            const rackId = parseInt(trimmedRange);
-            if (!isNaN(rackId)) {
-              rackLayout.push({
-                id: rackId,
-                enterprise: assignment.enterprise,
-                enabled: assignment.enabled,
-                color: assignment.color || roomConfig.defaultColor,
-              });
-            }
-          }
-        });
-      });
+    const rackLayout = cabinets.map(cabinet => ({
+      id: cabinet.cabinet_id,
+      enterprise: cabinet.enterprise,
+      enabled: cabinet.enabled,
+      color: cabinet.color,
+      position: {
+        row: cabinet.row_position,
+        col: cabinet.col_position
+      },
+      visibleIndex: cabinet.visible_index
+    }));
 
-      // 设置选中的机房，触发界面更新
-      if (roomConfig) {
-        const roomData = {
-          id: roomId,
-          name: `机房${roomId}`,
-          floor: 1,
-        };
+    // 构建房间数据
+    const roomData = {
+      id: roomId,
+      name: roomInfo.room_name || `${roomId}机房`,
+      rackCount: cabinets.length,
+      usedCount: cabinets.filter(c => c.enterprise && c.enterprise !== '未启用').length,
+      enterpriseCount: new Set(cabinets.filter(c => c.enterprise && c.enterprise !== '未启用').map(c => c.enterprise)).size,
+      rackLayout: rackLayout,
+      floor: parseInt(roomId.split('-')[0]) || parseInt(roomId.charAt(0)),
+      layoutCommands: []
+    };
 
-        // 设置选中的机房（用于布局图）
-        dashboardStore.setSelectedRoom(roomData);
+    // 使用nextTick确保DOM更新后再设置新的房间
+    nextTick(() => {
+      // 设置选中的机房（用于布局图）
+      dashboardStore.setSelectedRoom(roomData);
 
-        // 同时显示机房详细信息面板（与点击机房模型时的行为一致）
-        clickedRoom.value = roomData;
-        showDetailsPanel.value = true;
+      // 同时显示机房详细信息面板（与点击机房模型时的行为一致）
+      clickedRoom.value = roomData;
+      showDetailsPanel.value = true;
 
-        // 注意：这里不关闭企业概览面板，保持其开启状态
-        console.log("显示机房详细信息面板，保持企业概览面板开启");
-      }
-    }
-  });
+      // 注意：这里不关闭企业概览面板，保持其开启状态
+      console.log("显示机房详细信息面板，保持企业概览面板开启");
+    });
+  } catch (error) {
+    console.error("获取机房数据失败:", error);
+  }
 };
 
 // 生命周期

@@ -1,95 +1,45 @@
 /** 机房初始化模块 - 处理机房配置和机柜控制器的协调 */
 import { rackController, type RoomRackLayout } from './rackController'
-import { roomConfigs, isRoomClickable, type RoomConfig } from '@/config/roomConfig'
+import { isRoomClickable } from '@/config/roomConfig'
 import { roomLayoutService } from './roomLayoutService'
 
 /**
  * 初始化所有机房
- * 遍历机房配置并调用机柜控制器进行初始化
+ * 从数据库加载所有机房配置
  */
-export function initializeAllRooms(): void {
-  console.log('开始初始化机房配置...')
+export async function initializeAllRooms(): Promise<void> {
+  console.log('开始从数据库初始化所有机房...')
 
-  roomConfigs.forEach((config) => {
-    try {
-      rackController.initializeRoom(config.roomId)
-      console.log(`✅ 机房 ${config.roomId} 初始化成功`)
+  try {
+    const rooms = await roomLayoutService.getAllRoomsFromDB()
+    console.log(`找到 ${rooms.length} 个机房配置`)
 
-      config.assignments.forEach((assignment) => {
-        const command = `${config.roomId}(${assignment.rackRange},${assignment.enabled})`
-        const success = rackController.executeRackCommand(command, assignment.enterprise)
-
-        if (success) {
-          console.log(
-            `✅ ${assignment.enterprise} 在 ${config.roomId} 的机柜 ${assignment.rackRange} 配置成功`,
-          )
-        } else {
-          console.error(`❌ ${assignment.enterprise} 在 ${config.roomId} 的机柜配置失败`)
-        }
-      })
-    } catch (error) {
-      console.error(`❌ 机房 ${config.roomId} 配置失败:`, error)
+    for (const room of rooms) {
+      try {
+        await roomLayoutService.initializeRoomFromDB(room.room_id)
+        console.log(`✅ 机房 ${room.room_id} 从数据库初始化成功`)
+      } catch (error) {
+        console.error(`❌ 机房 ${room.room_id} 配置失败:`, error)
+      }
     }
-  })
 
-  console.log('机房配置初始化完成！')
+    console.log('所有机房从数据库初始化完成！')
+  } catch (error) {
+    console.error('获取机房列表失败:', error)
+  }
 }
 
 /**
- * 初始化特定机房（优先从数据库加载，失败则使用原始配置）
+ * 初始化特定机房（从数据库加载）
  * @param roomId 机房ID
  */
 export async function initializeRoom(roomId: string): Promise<void> {
   try {
     await roomLayoutService.initializeRoomFromDB(roomId)
     console.log(`✅ 机房 ${roomId} 从数据库初始化成功`)
-    // 数据库加载成功，直接返回，不再使用原始配置
-    return
   } catch (error) {
-    console.warn(`⚠️ 机房 ${roomId} 数据库加载失败，使用原始配置:`, error)
-    const config = roomConfigs.find((c) => c.roomId === roomId)
-    if (config) {
-      rackController.initializeRoom(config.roomId)
-      console.log(`✅ 机房 ${config.roomId} 使用原始配置初始化成功`)
-      config.assignments.forEach((assignment) => {
-        const command = `${config.roomId}(${assignment.rackRange},${assignment.enabled})`
-        const success = rackController.executeRackCommand(command, assignment.enterprise)
-        if (success) {
-          console.log(`✅ ${assignment.enterprise} 机柜配置成功`)
-        } else {
-          console.error(`❌ ${assignment.enterprise} 机柜配置失败`)
-        }
-      })
-    } else {
-      console.error(`❌ 未找到机房 ${roomId} 的配置`)
-    }
-  }
-}
-
-/**
- * 同步版本初始化特定机房（仅使用原始配置）
- * @param roomId 机房ID
- */
-export function initializeRoomSync(roomId: string): void {
-  const config = roomConfigs.find((c) => c.roomId === roomId)
-  if (!config) {
-    console.error(`❌ 未找到机房 ${roomId} 的配置`)
-    return
-  }
-  try {
-    rackController.initializeRoom(config.roomId)
-    console.log(`✅ 机房 ${config.roomId} 初始化成功`)
-    config.assignments.forEach((assignment) => {
-      const command = `${config.roomId}(${assignment.rackRange},${assignment.enabled})`
-      const success = rackController.executeRackCommand(command, assignment.enterprise)
-      if (success) {
-        console.log(`✅ ${assignment.enterprise} 机柜配置成功`)
-      } else {
-        console.error(`❌ ${assignment.enterprise} 机柜配置失败`)
-      }
-    })
-  } catch (error) {
-    console.error(`❌ 机房 ${roomId} 配置失败:`, error)
+    console.error(`❌ 机房 ${roomId} 数据库加载失败:`, error)
+    // 不再使用本地配置，只依赖数据库
   }
 }
 
@@ -138,13 +88,12 @@ export function addRackAssignment(
 export function getRoomStatus(roomId: string) {
   const layout = rackController.getRoomLayout(roomId)
   const stats = rackController.getRoomStats(roomId)
-  const config = roomConfigs.find((c) => c.roomId === roomId)
 
   return {
     layout,
     stats,
     roomId,
-    defaultColor: config?.defaultColor || '#4a4a4a',
+    defaultColor: '#4a4a4a', // 使用默认颜色
   }
 }
 

@@ -389,3 +389,60 @@ def get_backup_records(db, limit: int = 10) -> list:
 def get_latest_backup(db) -> DbBackupRecord:
     """获取最新备份记录"""
     return db.query(DbBackupRecord).order_by(DbBackupRecord.created_at.desc()).first()
+
+
+def get_cabinet_statistics(db) -> dict:
+    """获取所有机柜的统计数据"""
+    all_cabinets = db.query(CabinetConfig).filter(CabinetConfig.enabled == True).all()
+    
+    # 计算各种类型的机柜数量
+    total_cabinets = len(all_cabinets)
+    enterprise_cabinets = sum(1 for c in all_cabinets if c.enterprise)
+    self_use_cabinets = total_cabinets - enterprise_cabinets
+    
+    # 应计收机柜：有企业分配的机柜
+    should_bill_cabinets = enterprise_cabinets
+    
+    # 已计收机柜：暂时与应计收机柜相同，可根据实际业务逻辑调整
+    billed_cabinets = enterprise_cabinets
+    
+    # 预占机柜：暂时设为0，可根据实际业务逻辑调整
+    reserved_cabinets = 0
+    
+    return {
+        "totalCabinets": total_cabinets,
+        "shouldBillCabinets": should_bill_cabinets,
+        "billedCabinets": billed_cabinets,
+        "reservedCabinets": reserved_cabinets,
+        "enterpriseCabinets": enterprise_cabinets,
+        "selfUseCabinets": self_use_cabinets
+    }
+
+
+def get_room_cabinet_statistics(db, room_id: str) -> dict:
+    """获取单个机房的机柜统计数据"""
+    room = get_room_by_id(db, room_id)
+    if not room:
+        return {
+            "totalCabinets": 0,
+            "usedCabinets": 0,
+            "freeCabinets": 0,
+            "usageRate": 0
+        }
+    
+    all_cabinets = db.query(CabinetConfig).filter(
+        CabinetConfig.room_id == room_id,
+        CabinetConfig.enabled == True
+    ).all()
+    
+    total_cabinets = len(all_cabinets)
+    used_cabinets = sum(1 for c in all_cabinets if c.enterprise and c.enterprise != "未启用")
+    free_cabinets = total_cabinets - used_cabinets
+    usage_rate = (used_cabinets / total_cabinets * 100) if total_cabinets > 0 else 0
+    
+    return {
+        "totalCabinets": total_cabinets,
+        "usedCabinets": used_cabinets,
+        "freeCabinets": free_cabinets,
+        "usageRate": round(usage_rate, 2)
+    }

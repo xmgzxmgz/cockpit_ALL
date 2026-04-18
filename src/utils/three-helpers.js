@@ -273,24 +273,8 @@ async function generateMockData() {
         }
       }
 
-      // 只生成指定的外圈机房
-      for (const floor of targetFloors) {
-        for (const room of targetRooms) {
-          const roomId = `${floor}${room.toString().padStart(2, '0')}`; // 改为：207, 209...
-          defaultRooms.push({
-            id: roomId,
-            floor,
-            room,
-            disk: Math.random() * 100,
-            temperature: 20 + Math.random() * 30,
-            status: Math.random() > 0.8 ? 'alert' : 'normal',
-            enterprise: Math.random() > 0.3 ? getRandomEnterprise() : null,
-            network: Math.random() * 1000,
-            isOuterRoom: true,
-            isEnabled: true,
-          });
-        }
-      }
+      // 不再生成外圈机房
+
 
       realTimeData.rooms = defaultRooms;
     }
@@ -518,18 +502,8 @@ async function createFloor(floorNumber) {
 
 // === 房间创建 ===
 async function createHexagonalRooms(floorGroup, floorNumber, yPosition, innerRadius, outerRadius) {
+  // 只创建内圈机房，删除外圈机房
   await createRoomRing(floorGroup, floorNumber, yPosition, innerRadius, outerRadius, 0, 6)
-  const extendedInnerRadius = outerRadius * 1.2
-  const extendedOuterRadius = outerRadius * 1.5
-  await createRoomRing(
-    floorGroup,
-    floorNumber,
-    yPosition,
-    extendedInnerRadius,
-    extendedOuterRadius,
-    6,
-    12,
-  )
 }
 
 async function createRoomRing(
@@ -737,6 +711,40 @@ function getDominantEnterprise(roomId) {
 }
 
 function getRoomColor(roomId) {
+  // 从rackController获取机柜布局数据
+  const rackLayout = rackController.getRoomLayout(roomId);
+  
+  // 计算告警程度
+  if (rackLayout && rackLayout.length > 0) {
+    const totalRacks = rackLayout.length;
+    // 排除"未启用"的机柜才算已使用
+    const usedRacks = rackLayout.filter(rack => rack.enterprise && rack.enterprise !== '未启用').length;
+    const usageRatio = usedRacks / totalRacks;
+    
+    // 根据使用率计算颜色梯度
+    if (usageRatio >= 0.9) {
+      return 0xff4d4f; // 红色，最高负载
+    } else if (usageRatio >= 0.8) {
+      return 0xff7a45; // 橙红色
+    } else if (usageRatio >= 0.7) {
+      return 0xfaad14; // 黄色
+    } else if (usageRatio >= 0.6) {
+      return 0x95de64; // 浅绿色
+    } else if (usageRatio >= 0.5) {
+      return 0x52c41a; // 绿色
+    } else if (usageRatio >= 0.4) {
+      return 0x73d13d; // 淡绿色
+    } else if (usageRatio >= 0.3) {
+      return 0x69c0ff; // 浅蓝色
+    } else if (usageRatio >= 0.2) {
+      return 0x40a9ff; // 中蓝色
+    } else if (usageRatio >= 0.1) {
+      return 0x1890ff; // 深蓝色
+    } else {
+      return 0x096dd9; // 最深的蓝色
+    }
+  }
+
   // 从房间数据中获取颜色
   const roomData = realTimeData.rooms.find(room => room.id === roomId);
   if (roomData && roomData.color) {
@@ -745,18 +753,6 @@ function getRoomColor(roomId) {
   }
 
   //  fallback 逻辑
-  const floorNumber = parseInt(roomId.charAt(0));
-  const roomNumber = parseInt(roomId.slice(-2));
-
-  // 其他楼层和外圈机房保持原有逻辑
-  if (roomNumber >= 7 && roomNumber <= 12) {
-    return 0x0276db;
-  }
-
-  const dominantEnterprise = getDominantEnterprise(roomId);
-  if (dominantEnterprise) {
-    return 0x19dfe6;
-  }
   return 0x6b7280;
 }
 
@@ -999,7 +995,7 @@ function startRealTimeUpdates() {
     if (eventCallbacks.onDataUpdate) {
       eventCallbacks.onDataUpdate(getSystemStats())
     }
-  }, 3600 * 1000)
+  }, 1000) // 每1秒更新一次，提高实时性
 }
 
 function updateRealTimeData() {

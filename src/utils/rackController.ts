@@ -361,13 +361,13 @@ export class RackController {
 
     const racks = Array.from(layout.racks.values())
       .filter((rack) => rack.enabled)
+      .sort((a, b) => (a.visibleIndex || 0) - (b.visibleIndex || 0))
 
     if (!hideUnassigned) {
-      // 返回所有启用的机柜，确保isHidden属性正确设置
-      return racks.map((rack, index) => ({
+      // 返回所有启用的机柜，保持数据库中的visibleIndex
+      return racks.map((rack) => ({
         ...rack,
         isHidden: false,
-        visibleIndex: index + 1, // 添加可见机柜的序号
       }))
     }
 
